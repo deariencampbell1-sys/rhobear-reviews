@@ -1,0 +1,869 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RHOBEAR Reviews — AI code review that doesn't sleep</title>
+<meta name="description" content="Senior-grade AI code review on every PR. One free review per day. $19/mo for 100. No per-seat tax. Verdicts in under a minute.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#070912; --bg-2:#0b1020; --bg-3:#0e1428; --panel:rgba(255,255,255,0.03);
+    --panel-hi:rgba(255,255,255,0.05);
+    --border:rgba(255,255,255,0.07); --border-hi:rgba(255,255,255,0.14);
+    --text:#e8ecf3; --text-2:#9aa3b8; --text-dim:#5e6883;
+    --gold:#ffb800; --gold-hi:#ffd255; --gold-glow:rgba(255,184,0,0.18);
+    --green:#4ade80; --red:#f87171; --blue:#60a5fa;
+    --mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+    --sans:'Inter',-apple-system,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  /* anchor offset so sticky topbar doesn't cover scrolled-to section */
+  section[id],#top{scroll-margin-top:84px}
+  a{color:inherit;text-decoration:none}
+  a:hover{color:var(--gold-hi)}
+  ::selection{background:var(--gold);color:#000}
+
+  /* ═══════════ FLOATING GRID BACKGROUND ═══════════ */
+  .bg-layer{position:fixed;inset:0;z-index:-2;pointer-events:none;overflow:hidden}
+  .grid-bg{
+    position:absolute;inset:-100px -100px -100px -100px;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size:60px 60px;
+    mask-image:radial-gradient(ellipse 90% 70% at 50% 30%, #000 30%, transparent 80%);
+    -webkit-mask-image:radial-gradient(ellipse 90% 70% at 50% 30%, #000 30%, transparent 80%);
+    animation:gridDrift 80s linear infinite;
+  }
+  @keyframes gridDrift {
+    0%{transform:translate(0,0)}
+    100%{transform:translate(60px,60px)}
+  }
+  .glow-orb{
+    position:absolute;border-radius:50%;filter:blur(80px);opacity:0.5;
+    animation:orbDrift 24s ease-in-out infinite alternate;
+  }
+  .orb-1{width:520px;height:520px;background:radial-gradient(circle, rgba(255,184,0,0.35) 0%, transparent 70%);top:-80px;right:-100px;animation-duration:30s}
+  .orb-2{width:460px;height:460px;background:radial-gradient(circle, rgba(96,165,250,0.22) 0%, transparent 70%);top:40vh;left:-120px;animation-duration:38s;animation-delay:-8s}
+  .orb-3{width:380px;height:380px;background:radial-gradient(circle, rgba(255,184,0,0.18) 0%, transparent 70%);top:120vh;right:10vw;animation-duration:46s;animation-delay:-15s}
+  @keyframes orbDrift {
+    0%{transform:translate(0,0) scale(1)}
+    50%{transform:translate(40px,-30px) scale(1.08)}
+    100%{transform:translate(-30px,40px) scale(0.94)}
+  }
+
+  /* ═══════════ REVEAL ON SCROLL ═══════════ */
+  .reveal{opacity:0;transform:translateY(36px);filter:blur(6px);transition:opacity 1.0s cubic-bezier(0.16,1,0.3,1), transform 1.0s cubic-bezier(0.16,1,0.3,1), filter 1.0s ease}
+  .reveal.in{opacity:1;transform:translateY(0);filter:blur(0)}
+  .reveal-stagger > *{opacity:0;transform:translateY(28px) scale(0.98);filter:blur(4px);transition:opacity 0.8s ease, transform 0.8s cubic-bezier(0.16,1,0.3,1), filter 0.8s ease}
+  .reveal-stagger.in > *{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}
+  .reveal-stagger.in > *:nth-child(1){transition-delay:0.04s}
+  .reveal-stagger.in > *:nth-child(2){transition-delay:0.14s}
+  .reveal-stagger.in > *:nth-child(3){transition-delay:0.24s}
+  .reveal-stagger.in > *:nth-child(4){transition-delay:0.34s}
+  .reveal-stagger.in > *:nth-child(5){transition-delay:0.44s}
+  .reveal-stagger.in > *:nth-child(6){transition-delay:0.54s}
+  .reveal-stagger.in > *:nth-child(7){transition-delay:0.64s}
+  .reveal-stagger.in > *:nth-child(8){transition-delay:0.74s}
+  @media (prefers-reduced-motion: reduce){
+    .reveal,.reveal-stagger > *{opacity:1;transform:none;filter:none;transition:none}
+  }
+
+  /* ═══════════ TOPBAR ═══════════ */
+  .top{position:sticky;top:0;z-index:50;background:rgba(7,9,18,0.7);backdrop-filter:blur(16px);border-bottom:1px solid var(--border)}
+  .top-inner{max-width:1240px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;gap:24px}
+  .brand{display:flex;align-items:center;gap:12px;font-weight:600;font-size:15px;letter-spacing:0.01em}
+  .brand-mark{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;background:linear-gradient(135deg,rgba(255,184,0,0.18) 0%,rgba(255,184,0,0.04) 100%);border:1px solid rgba(255,184,0,0.3);box-shadow:0 4px 18px rgba(255,184,0,0.18)}
+  .brand-mark svg{width:28px;height:28px;display:block}
+  .brand-name{display:flex;align-items:baseline;gap:8px;letter-spacing:0.005em}
+  .brand-name b{font-weight:700;color:var(--text)}
+  .brand-name span{color:var(--text-2);font-weight:400}
+  .nav{display:flex;gap:4px;margin-left:auto;font-size:13px;font-weight:500}
+  .nav a{padding:8px 14px;border-radius:8px;color:var(--text-2);transition:all 0.15s;position:relative}
+  .nav a:hover{background:var(--panel);color:var(--text)}
+  .nav a.active{color:var(--gold)}
+  .cta-pill{background:var(--gold);color:#1a1206;padding:10px 18px;border-radius:99px;font-weight:600;font-size:13px;letter-spacing:0.01em;border:1px solid var(--gold);transition:all 0.2s;display:inline-flex;align-items:center;gap:8px}
+  .cta-pill:hover{background:var(--gold-hi);color:#1a1206;transform:translateY(-1px);box-shadow:0 8px 24px -6px rgba(255,184,0,0.45)}
+  .cta-pill svg{width:14px;height:14px}
+
+  /* ═══════════ HERO ═══════════ */
+  .hero{max-width:1240px;margin:0 auto;padding:96px 24px 80px;position:relative}
+  .hero-grid{display:grid;grid-template-columns:1.25fr 1fr;gap:64px;align-items:center}
+  .live-tag{display:inline-flex;align-items:center;gap:9px;font-family:var(--mono);font-size:11px;color:var(--green);padding:6px 12px;background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.22);border-radius:99px;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:26px}
+  .live-dot{width:6px;height:6px;background:var(--green);border-radius:50%;box-shadow:0 0 10px var(--green);animation:pulse 2s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.45}}
+  h1{font-size:clamp(40px,5.5vw,68px);line-height:1.04;letter-spacing:-0.025em;font-weight:700;margin-bottom:24px}
+  h1 .accent{background:linear-gradient(110deg, var(--gold) 30%, var(--gold-hi) 50%, var(--gold) 70%);background-size:200% auto;-webkit-background-clip:text;background-clip:text;color:transparent;animation:shimmer 5s linear infinite}
+  @keyframes shimmer{0%{background-position:0% 50%}100%{background-position:200% 50%}}
+  .lede{font-size:19px;color:var(--text-2);line-height:1.55;max-width:580px;margin-bottom:34px}
+  .lede strong{color:var(--text);font-weight:500}
+  .hero-ctas{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+  .btn-primary{background:var(--gold);color:#1a1206;padding:15px 28px;border-radius:99px;font-weight:600;font-size:15px;border:1px solid var(--gold);transition:all 0.2s;display:inline-flex;align-items:center;gap:10px;box-shadow:0 8px 28px -8px rgba(255,184,0,0.4)}
+  .btn-primary:hover{background:var(--gold-hi);color:#1a1206;transform:translateY(-2px);box-shadow:0 14px 38px -10px rgba(255,184,0,0.55)}
+  .btn-primary svg{width:18px;height:18px}
+  .btn-secondary{background:rgba(255,255,255,0.04);color:var(--text);padding:15px 28px;border-radius:99px;font-weight:500;font-size:15px;border:1px solid var(--border-hi);transition:all 0.2s;display:inline-flex;align-items:center;gap:10px}
+  .btn-secondary:hover{background:rgba(255,255,255,0.08);border-color:var(--text-2);transform:translateY(-2px)}
+  .hero-stamp{margin-top:22px;display:inline-flex;align-items:center;gap:10px;color:var(--text-dim);font-size:13px;font-family:var(--mono)}
+  .hero-stamp svg{width:14px;height:14px;color:var(--green)}
+
+  /* hero terminal card */
+  .hero-card{background:linear-gradient(180deg,rgba(255,255,255,0.045) 0%,rgba(255,255,255,0.015) 100%);border:1px solid var(--border);border-radius:18px;padding:0;overflow:hidden;box-shadow:0 24px 64px -20px rgba(0,0,0,0.6),0 0 0 1px rgba(255,184,0,0.04)}
+  .hc-tabs{display:flex;align-items:center;gap:6px;padding:14px 18px;border-bottom:1px solid var(--border);background:rgba(0,0,0,0.2)}
+  .hc-dot{width:10px;height:10px;border-radius:50%}
+  .hc-dot.r{background:#ff5f57}.hc-dot.y{background:#febc2e}.hc-dot.g{background:#28c840}
+  .hc-title{margin-left:8px;font-family:var(--mono);font-size:11px;color:var(--text-2);letter-spacing:0.05em}
+  .hc-body{padding:20px 22px;font-family:var(--mono);font-size:12.5px;line-height:1.65}
+  .hc-line{padding:2px 0;color:var(--text-2)}
+  .hc-line.cmd{color:var(--text)}
+  .hc-line.cmd::before{content:'$ ';color:var(--gold)}
+  .hc-line.arrow{color:var(--text-dim)}
+  .hc-line.tag{color:var(--gold)}
+  .hc-line.sev{color:var(--red);font-weight:500}
+  .hc-line.sev .lvl{display:inline-block;width:60px}
+  .hc-line.ind{padding-left:78px;color:var(--text-dim);font-size:11px}
+  .hc-line.ok{color:var(--green);font-weight:500;margin-top:6px}
+  .hc-cursor{display:inline-block;width:7px;height:14px;background:var(--gold);margin-left:2px;vertical-align:middle;animation:blink 1s steps(2) infinite}
+  @keyframes blink{0%,50%{opacity:1}51%,100%{opacity:0}}
+
+  /* ═══════════ STAT STRIP ═══════════ */
+  .strip{border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:linear-gradient(180deg,var(--bg-2) 0%,var(--bg-3) 100%);position:relative;overflow:hidden}
+  .strip::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);background-size:40px 40px;mask-image:linear-gradient(to right, transparent, #000 30%, #000 70%, transparent);pointer-events:none}
+  .strip-inner{max-width:1240px;margin:0 auto;padding:38px 24px;display:grid;grid-template-columns:repeat(4,1fr);gap:32px;position:relative}
+  .stat-cell{display:flex;flex-direction:column;gap:6px}
+  .stat-n{font-family:var(--mono);font-size:34px;font-weight:600;color:var(--gold);line-height:1;letter-spacing:-0.02em}
+  .stat-l{font-size:12px;color:var(--text-2);text-transform:uppercase;letter-spacing:0.09em;font-weight:500}
+  .stat-s{font-size:11px;color:var(--text-dim);font-family:var(--mono)}
+
+  /* ═══════════ SECTION BASE ═══════════ */
+  section{padding:120px 0;position:relative}
+  .wrap{max-width:1240px;margin:0 auto;padding:0 24px;position:relative}
+  .eyebrow{display:inline-block;font-family:var(--mono);font-size:11px;color:var(--gold);letter-spacing:0.18em;text-transform:uppercase;margin-bottom:14px;padding:5px 12px;background:var(--gold-glow);border:1px solid rgba(255,184,0,0.22);border-radius:99px}
+  h2{font-size:clamp(32px,4vw,46px);line-height:1.1;letter-spacing:-0.02em;font-weight:700;margin-bottom:18px;max-width:780px}
+  h2 .accent{color:var(--gold)}
+  .section-lede{font-size:17px;color:var(--text-2);max-width:680px;margin-bottom:56px;line-height:1.55}
+
+  /* ═══════════ HOW IT WORKS ═══════════ */
+  .steps{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+  .step{background:linear-gradient(180deg, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0.01) 100%);border:1px solid var(--border);border-radius:16px;padding:30px 24px;position:relative;transition:all 0.3s cubic-bezier(0.16,1,0.3,1);overflow:hidden}
+  .step::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 0%, rgba(255,184,0,0.08) 0%, transparent 60%);opacity:0;transition:opacity 0.3s}
+  .step:hover{border-color:var(--border-hi);transform:translateY(-4px);box-shadow:0 18px 40px -16px rgba(0,0,0,0.5)}
+  .step:hover::before{opacity:1}
+  .step-n{position:absolute;top:22px;right:24px;font-family:var(--mono);font-size:11px;color:var(--text-dim);letter-spacing:0.1em;font-weight:500}
+  .step-icon{width:48px;height:48px;background:linear-gradient(135deg, rgba(255,184,0,0.18) 0%, rgba(255,184,0,0.06) 100%);border:1px solid rgba(255,184,0,0.28);border-radius:12px;display:grid;place-items:center;margin-bottom:22px;color:var(--gold);position:relative;z-index:1}
+  .step-icon svg{width:24px;height:24px}
+  .step h3{font-size:17px;font-weight:600;margin-bottom:8px;letter-spacing:-0.01em;position:relative;z-index:1}
+  .step p{font-size:14px;color:var(--text-2);line-height:1.55;position:relative;z-index:1}
+  .step code{font-family:var(--mono);font-size:12px;background:rgba(255,184,0,0.1);color:var(--gold);padding:2px 7px;border-radius:5px}
+
+  /* ═══════════ PRICING ═══════════ */
+  .pricing{background:linear-gradient(180deg, var(--bg-2) 0%, var(--bg-3) 50%, var(--bg-2) 100%);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+  .price-head{text-align:center;margin-bottom:56px}
+  .price-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;max-width:1180px;margin:0 auto}
+  .plan{background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:38px;display:flex;flex-direction:column;position:relative;transition:all 0.3s}
+  .plan:hover{border-color:var(--border-hi);transform:translateY(-2px)}
+  .plan.featured{border-color:rgba(255,184,0,0.5);background:linear-gradient(180deg, rgba(255,184,0,0.05) 0%, var(--bg) 50%);box-shadow:0 0 0 1px rgba(255,184,0,0.15),0 24px 60px -20px rgba(255,184,0,0.18)}
+  .plan-flag{position:absolute;top:-12px;left:38px;background:var(--gold);color:#1a1206;font-size:11px;font-weight:600;padding:6px 14px;border-radius:99px;letter-spacing:0.05em;text-transform:uppercase;font-family:var(--mono);box-shadow:0 6px 18px -4px rgba(255,184,0,0.5)}
+  .plan-name{font-size:13px;color:var(--text-2);font-family:var(--mono);text-transform:uppercase;letter-spacing:0.12em;margin-bottom:18px;font-weight:500}
+  .plan-price{display:flex;align-items:baseline;gap:8px;margin-bottom:10px}
+  .price-n{font-size:60px;font-weight:700;letter-spacing:-0.03em;line-height:1}
+  .price-per{font-size:15px;color:var(--text-2)}
+  .plan-sub{font-size:14px;color:var(--text-2);margin-bottom:32px;min-height:22px}
+  .plan-features{list-style:none;display:flex;flex-direction:column;gap:14px;margin-bottom:36px;flex:1}
+  .plan-features li{display:flex;align-items:flex-start;gap:12px;font-size:14px;color:var(--text);line-height:1.5}
+  .check{width:18px;height:18px;flex-shrink:0;color:var(--gold);margin-top:2px}
+  .check.dim{color:var(--text-dim)}
+  .plan-features li.dim{color:var(--text-dim)}
+  .plan-cta{display:flex;align-items:center;justify-content:center;gap:8px;padding:15px;border-radius:99px;font-weight:600;font-size:15px;transition:all 0.2s}
+  .plan-cta.primary{background:var(--gold);color:#1a1206;border:1px solid var(--gold)}
+  .plan-cta.primary:hover{background:var(--gold-hi);color:#1a1206;transform:translateY(-1px);box-shadow:0 12px 32px -10px rgba(255,184,0,0.5)}
+  .plan-cta.outline{background:transparent;color:var(--text);border:1px solid var(--border-hi)}
+  .plan-cta.outline:hover{background:var(--panel);border-color:var(--text-2)}
+  .pricing-note{text-align:center;color:var(--text-dim);font-size:13px;margin-top:36px;font-family:var(--mono)}
+  .pricing-note strong{color:var(--text-2);font-weight:500}
+
+  /* ═══════════ CODEBASE SECTION ═══════════ */
+  .cb-grid{display:grid;grid-template-columns:1.05fr 1fr;gap:64px;align-items:center}
+  .cb-steps{display:flex;flex-direction:column;gap:24px;margin-top:40px}
+  .cb-step{display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:flex-start;padding:22px 26px;background:linear-gradient(180deg, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0.01) 100%);border:1px solid var(--border);border-radius:14px;transition:all 0.2s}
+  .cb-step:hover{border-color:var(--border-hi);transform:translateX(4px)}
+  .cb-step-tag{font-family:var(--mono);font-size:10px;font-weight:600;color:var(--gold);background:var(--gold-glow);border:1px solid rgba(255,184,0,0.22);border-radius:6px;padding:6px 10px;letter-spacing:0.1em;white-space:nowrap;align-self:flex-start;margin-top:2px}
+  .cb-step h4{font-size:16px;font-weight:600;margin-bottom:6px;letter-spacing:-0.005em}
+  .cb-step p{font-size:14px;color:var(--text-2);line-height:1.55}
+  .cb-callout{margin-top:32px;padding:18px 22px;background:linear-gradient(90deg, rgba(255,184,0,0.08) 0%, transparent 100%);border-left:3px solid var(--gold);border-radius:0 12px 12px 0;font-size:15px;font-style:italic;color:var(--text);line-height:1.5}
+  .cb-callout strong{color:var(--gold);font-style:normal;font-weight:600}
+
+  /* code graph viz */
+  .cb-graph-card{background:linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.005) 100%);border:1px solid var(--border);border-radius:18px;padding:0;overflow:hidden;box-shadow:0 24px 64px -24px rgba(0,0,0,0.6)}
+  .cb-graph-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);background:rgba(0,0,0,0.2);font-family:var(--mono);font-size:11px;color:var(--text-2)}
+  .cb-graph-head .pulse{display:inline-flex;align-items:center;gap:7px;color:var(--green)}
+  .cb-graph-head .pulse-dot{width:5px;height:5px;background:var(--green);border-radius:50%;box-shadow:0 0 8px var(--green);animation:pulse 2s ease-in-out infinite}
+  .cb-graph-svg{display:block;width:100%;height:auto;background:linear-gradient(180deg, rgba(255,184,0,0.02) 0%, transparent 60%)}
+  .cb-graph-svg .edge{stroke:rgba(255,255,255,0.12);stroke-width:1.2;fill:none}
+  .cb-graph-svg .edge.changed{stroke:var(--gold);stroke-width:1.8;stroke-dasharray:4 3;animation:flow 1.6s linear infinite}
+  @keyframes flow{to{stroke-dashoffset:-14}}
+  .cb-graph-svg .node{fill:rgba(255,255,255,0.08);stroke:rgba(255,255,255,0.18);stroke-width:1.2;transition:all 0.3s}
+  .cb-graph-svg .node.dim{fill:rgba(255,255,255,0.04);stroke:rgba(255,255,255,0.1)}
+  .cb-graph-svg .node.touched{fill:rgba(255,184,0,0.25);stroke:var(--gold);stroke-width:1.8}
+  .cb-graph-svg .node.hot{fill:var(--gold);stroke:var(--gold-hi);stroke-width:2;filter:drop-shadow(0 0 8px rgba(255,184,0,0.6));animation:hot 2.5s ease-in-out infinite}
+  @keyframes hot{0%,100%{filter:drop-shadow(0 0 8px rgba(255,184,0,0.5))}50%{filter:drop-shadow(0 0 16px rgba(255,184,0,0.85))}}
+  .cb-graph-svg .label{fill:var(--text-dim);font-family:var(--mono);font-size:9px}
+  .cb-graph-svg .label.hot{fill:var(--gold);font-weight:600}
+
+  .cb-graph-stats{display:grid;grid-template-columns:1fr 1fr;gap:0;border-top:1px solid var(--border)}
+  .cb-stat{padding:16px 20px;border-right:1px solid var(--border)}
+  .cb-stat:nth-child(2n){border-right:none}
+  .cb-stat:nth-child(n+3){border-top:1px solid var(--border)}
+  .cb-stat-k{font-family:var(--mono);font-size:10px;color:var(--text-2);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px}
+  .cb-stat-v{font-family:var(--mono);font-size:18px;color:var(--text);font-weight:600;letter-spacing:-0.01em}
+  .cb-stat-v.gold{color:var(--gold)}
+
+  /* ═══════════ BENCHMARKS ═══════════ */
+  .bench-intro{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:end;margin-bottom:48px}
+  .bench-table{border:1px solid var(--border);border-radius:16px;overflow:hidden;background:linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 100%)}
+  .bench-row{display:grid;grid-template-columns:1.7fr 1fr 1fr 1fr;gap:0;padding:20px 28px;border-bottom:1px solid var(--border);align-items:center;font-size:14px;transition:background 0.2s}
+  .bench-row:last-child{border-bottom:none}
+  .bench-row:hover:not(.head){background:rgba(255,255,255,0.02)}
+  .bench-row.head{background:var(--bg-2);font-family:var(--mono);font-size:11px;color:var(--text-2);text-transform:uppercase;letter-spacing:0.1em;font-weight:500}
+  .bench-row .model{display:flex;align-items:center;gap:12px;font-weight:500}
+  .bench-row .model.us{color:var(--gold)}
+  .bench-row .model .badge{font-family:var(--mono);font-size:10px;background:var(--gold);color:#1a1206;padding:3px 7px;border-radius:5px;letter-spacing:0.05em;font-weight:600}
+  .bench-row .score{font-family:var(--mono);font-size:14px;color:var(--text-2)}
+  .bench-row .score.lead{color:var(--gold);font-weight:600}
+  .bench-row .score.dim{color:var(--text-dim)}
+  .bench-footnote{font-size:12px;color:var(--text-dim);margin-top:20px;font-family:var(--mono);line-height:1.6}
+
+  /* ═══════════ TRANSPARENCY ═══════════ */
+  .trans-grid{display:grid;grid-template-columns:1.1fr 1fr;gap:64px;align-items:center}
+  .trans-points{display:flex;flex-direction:column;gap:22px;margin-top:36px}
+  .trans-point{display:flex;gap:18px;align-items:flex-start}
+  .trans-point .ico{width:38px;height:38px;background:linear-gradient(135deg, rgba(255,184,0,0.15) 0%, rgba(255,184,0,0.04) 100%);border:1px solid rgba(255,184,0,0.25);border-radius:10px;display:grid;place-items:center;flex-shrink:0;color:var(--gold)}
+  .trans-point .ico svg{width:18px;height:18px}
+  .trans-point h4{font-size:16px;font-weight:600;margin-bottom:6px}
+  .trans-point p{font-size:14px;color:var(--text-2);line-height:1.55}
+  .trans-card{background:linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%);border:1px solid var(--border);border-radius:18px;padding:30px;box-shadow:0 24px 64px -24px rgba(0,0,0,0.6)}
+  .receipt-head{display:flex;justify-content:space-between;align-items:center;padding-bottom:18px;border-bottom:1px solid var(--border);margin-bottom:22px;font-family:var(--mono);font-size:12px;color:var(--text-2)}
+  .receipt-head .vchip{padding:3px 8px;background:rgba(255,184,0,0.1);border:1px solid rgba(255,184,0,0.2);border-radius:5px;color:var(--gold);font-size:10px;letter-spacing:0.05em}
+  .receipt-row{display:flex;justify-content:space-between;padding:9px 0;font-family:var(--mono);font-size:13px}
+  .receipt-row .k{color:var(--text-2)}
+  .receipt-row .v{color:var(--text)}
+  .receipt-row.total{border-top:1px solid var(--border);margin-top:14px;padding-top:16px;font-weight:600}
+  .receipt-row.total .v{color:var(--gold);font-size:18px}
+  .receipt-foot{font-family:var(--mono);font-size:11px;color:var(--text-dim);margin-top:16px;line-height:1.6}
+
+  /* ═══════════ FAQ ═══════════ */
+  .faq-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  .faq{background:linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%);border:1px solid var(--border);border-radius:14px;padding:26px 30px;transition:all 0.2s}
+  .faq:hover{border-color:var(--border-hi);background:linear-gradient(180deg, rgba(255,255,255,0.045) 0%, rgba(255,255,255,0.015) 100%)}
+  .faq h4{font-size:16px;font-weight:600;margin-bottom:10px;color:var(--text);display:flex;align-items:center;gap:10px}
+  .faq h4::before{content:'';width:5px;height:5px;background:var(--gold);border-radius:50%;flex-shrink:0;box-shadow:0 0 0 3px rgba(255,184,0,0.18)}
+  .faq p{font-size:14px;color:var(--text-2);line-height:1.6}
+  .faq p code{font-family:var(--mono);font-size:12px;background:rgba(255,184,0,0.1);color:var(--gold);padding:1px 6px;border-radius:5px}
+
+  /* ═══════════ FINAL CTA ═══════════ */
+  .final{padding:140px 0;text-align:center;position:relative;overflow:hidden}
+  .final::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 50%, rgba(255,184,0,0.08) 0%, transparent 70%);pointer-events:none}
+  .final h2{font-size:clamp(36px,5vw,58px);max-width:none;margin:0 auto 24px;position:relative}
+  .final p{font-size:18px;color:var(--text-2);max-width:560px;margin:0 auto 36px;position:relative}
+  .final-ctas{position:relative;display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+
+  /* ═══════════ FOOTER ═══════════ */
+  footer{border-top:1px solid var(--border);background:var(--bg-2);padding:56px 0 40px}
+  .foot{max-width:1240px;margin:0 auto;padding:0 24px;display:flex;justify-content:space-between;align-items:center;gap:24px;flex-wrap:wrap;color:var(--text-dim);font-size:13px}
+  .foot-brand{display:flex;align-items:center;gap:10px}
+  .foot-brand .brand-mark{width:26px;height:26px;border-radius:7px;box-shadow:none}
+  .foot-brand .brand-mark svg{width:20px;height:20px}
+  .foot a{color:var(--text-2);transition:color 0.15s}
+  .foot a:hover{color:var(--gold-hi)}
+  .foot-links{display:flex;gap:24px}
+
+  /* ═══════════ RESPONSIVE ═══════════ */
+  @media (max-width:1080px){
+    .price-grid{grid-template-columns:1fr;gap:18px;max-width:560px}
+  }
+  @media (max-width:900px){
+    .hero-grid,.bench-intro,.trans-grid,.faq-grid,.cb-grid{grid-template-columns:1fr;gap:48px}
+    .strip-inner{grid-template-columns:repeat(2,1fr);gap:28px}
+    .steps,.price-grid{grid-template-columns:1fr;gap:16px}
+    .cb-step{grid-template-columns:1fr;gap:12px}
+    .nav{display:none}
+    .top-inner{justify-content:space-between;gap:12px}
+    .bench-row{grid-template-columns:1.4fr 1fr;font-size:13px;padding:16px 20px}
+    .bench-row .score:nth-child(3),.bench-row .score:nth-child(4){display:none}
+    .bench-row.head > div:nth-child(3),.bench-row.head > div:nth-child(4){display:none}
+    section{padding:80px 0}
+    .hero{padding:64px 24px 56px}
+  }
+</style>
+
+<!-- ═══════════ REUSABLE RHOBEAR MARK (defined once, used everywhere) ═══════════ -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="rb-grad" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#ffd255"/>
+      <stop offset="100%" stop-color="#d99500"/>
+    </linearGradient>
+    <symbol id="rb-mark" viewBox="0 0 36 36">
+      <!-- left ear -->
+      <circle cx="10" cy="11" r="4.8" fill="url(#rb-grad)"/>
+      <!-- right ear -->
+      <circle cx="26" cy="11" r="4.8" fill="url(#rb-grad)"/>
+      <!-- head -->
+      <circle cx="18" cy="20" r="11.5" fill="url(#rb-grad)"/>
+      <!-- snout shading -->
+      <ellipse cx="18" cy="23.5" rx="5.2" ry="4" fill="#3a2200" opacity="0.32"/>
+      <!-- left eye -->
+      <circle cx="13" cy="18" r="1.5" fill="#1a0e00"/>
+      <!-- right eye -->
+      <circle cx="23" cy="18" r="1.5" fill="#1a0e00"/>
+      <!-- nose -->
+      <ellipse cx="18" cy="22" rx="1.9" ry="1.4" fill="#1a0e00"/>
+    </symbol>
+  </defs>
+</svg>
+</head>
+<body>
+
+<!-- ═══════════ FLOATING GRID BACKGROUND ═══════════ -->
+<div class="bg-layer">
+  <div class="grid-bg"></div>
+  <div class="glow-orb orb-1"></div>
+  <div class="glow-orb orb-2"></div>
+  <div class="glow-orb orb-3"></div>
+</div>
+
+<!-- ═══════════ TOPBAR ═══════════ -->
+<header class="top">
+  <div class="top-inner">
+    <a href="#top" class="brand">
+      <span class="brand-mark"><svg><use href="#rb-mark"/></svg></span>
+      <span class="brand-name"><b>RHOBEAR</b><span>Reviews</span></span>
+    </a>
+    <nav class="nav">
+      <a href="#how" data-nav>How it works</a>
+      <a href="#codebase" data-nav>Codebase</a>
+      <a href="#pricing" data-nav>Pricing</a>
+      <a href="#bench" data-nav>Benchmarks</a>
+      <a href="#trans" data-nav>Receipts</a>
+      <a href="#faq" data-nav>FAQ</a>
+    </nav>
+    <a href="#install" class="cta-pill">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.4 3-.405 1.02.005 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+      Install on GitHub
+    </a>
+  </div>
+</header>
+
+<!-- ═══════════ HERO ═══════════ -->
+<section class="hero" id="top">
+  <div class="hero-grid">
+    <div class="reveal">
+      <div class="live-tag"><span class="live-dot"></span> Reviewing live · 78% SWE-bench</div>
+      <h1>AI code review<br>that doesn't <span class="accent">sleep.</span></h1>
+      <p class="lede"><strong>One free review per day.</strong> Every PR. Every repo. No per-seat tax, no minimums, no sign-up beyond installing the GitHub App. RHOBEAR Reviews lands a verdict in under 2 minutes — half the time of CodeRabbit, a third of CodeAnt — so you fix, push, and merge while you're still in the headspace.</p>
+      <div class="hero-ctas">
+        <a href="#install" class="btn-primary">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.4 3-.405 1.02.005 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+          Install on GitHub
+        </a>
+        <a href="#how" class="btn-secondary">See how it works →</a>
+      </div>
+      <div class="hero-stamp">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="3,11 8,16 17,5"/></svg>
+        No credit card · Install in 20 seconds · Free forever
+      </div>
+    </div>
+
+    <div class="reveal" style="transition-delay:0.18s">
+      <div class="hero-card">
+        <div class="hc-tabs">
+          <span class="hc-dot r"></span><span class="hc-dot y"></span><span class="hc-dot g"></span>
+          <span class="hc-title">rhobear · review.log · live</span>
+        </div>
+        <div class="hc-body">
+          <div class="hc-line cmd">gh pr view 142 → @rhobear review</div>
+          <div class="hc-line arrow">→ fetching diff · 87 files · +1,243 / -318</div>
+          <div class="hc-line arrow">→ scoring 9 categories of risk</div>
+          <div class="hc-line">&nbsp;</div>
+          <div class="hc-line sev"><span class="lvl">[HIGH]</span>src/auth.py:142 — token compared with ==</div>
+          <div class="hc-line ind">Risk: timing attack on credential check</div>
+          <div class="hc-line ind">Fix:  hmac.compare_digest()</div>
+          <div class="hc-line">&nbsp;</div>
+          <div class="hc-line sev"><span class="lvl">[HIGH]</span>src/api/upload.py:88 — path traversal</div>
+          <div class="hc-line sev"><span class="lvl">[MED]</span>tests/__init__.py:1 — missing coverage</div>
+          <div class="hc-line">&nbsp;</div>
+          <div class="hc-line ok">VERDICT: REQUEST_CHANGES · 2 blocking</div>
+          <div class="hc-line tag">posted to PR #142 · 89s total<span class="hc-cursor"></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ STAT STRIP ═══════════ -->
+<div class="strip">
+  <div class="strip-inner reveal-stagger">
+    <div class="stat-cell">
+      <div class="stat-n">78%</div>
+      <div class="stat-l">SWE-bench score</div>
+      <div class="stat-s">Real GitHub issues solved</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-n">204K</div>
+      <div class="stat-l">Context window</div>
+      <div class="stat-s">Full PR + repo context</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-n">&lt;2 min</div>
+      <div class="stat-l">Median review time</div>
+      <div class="stat-s">Mention to verdict</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-n">$0</div>
+      <div class="stat-l">First daily review</div>
+      <div class="stat-s">No card, no signup</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ HOW IT WORKS ═══════════ -->
+<section id="how">
+  <div class="wrap">
+    <div class="reveal">
+      <span class="eyebrow">How it works</span>
+      <h2>Install. Open a PR. Tag <span class="accent">@rhobear</span>. Done.</h2>
+      <p class="section-lede">No new dashboard to learn. No webhook to configure. RHOBEAR Reviews lives where your code already does — in the PR thread, posting structured findings with file:line evidence and a binary verdict your team can act on.</p>
+    </div>
+
+    <div class="steps reveal-stagger">
+      <div class="step">
+        <span class="step-n">01</span>
+        <div class="step-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v8m0 0l-3-3m3 3l3-3M4 13v6a2 2 0 002 2h12a2 2 0 002-2v-6"/></svg>
+        </div>
+        <h3>Install the GitHub App</h3>
+        <p>Pick the repos you want reviewed. Free covers public; Pro covers private. Takes about 20 seconds.</p>
+      </div>
+      <div class="step">
+        <span class="step-n">02</span>
+        <div class="step-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="18" r="3"/><path d="M6 9v6M18 15V9a3 3 0 00-3-3h-3"/><path d="M11 4l-2 2 2 2"/></svg>
+        </div>
+        <h3>Open a PR — or comment</h3>
+        <p>New PRs trigger us automatically. Existing PRs: drop <code>@rhobear review</code> in any comment.</p>
+      </div>
+      <div class="step">
+        <span class="step-n">03</span>
+        <div class="step-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/><path d="M11 8v3l2 2" stroke-width="1.8"/></svg>
+        </div>
+        <h3>Reviewed with scrutiny</h3>
+        <p>Security, correctness, scope creep, missing tests. Every finding gets file:line evidence and a fix.</p>
+      </div>
+      <div class="step">
+        <span class="step-n">04</span>
+        <div class="step-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
+        </div>
+        <h3>Binary verdict on the PR</h3>
+        <p><code>ACCEPT</code>, <code>REQUEST_CHANGES</code>, or <code>COMMENT</code>. Posted as a PR review your team can resolve.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ CODEBASE READS ═══════════ -->
+<section id="codebase">
+  <div class="wrap">
+    <div class="cb-grid">
+      <div class="reveal">
+        <span class="eyebrow">Full codebase context · NEW</span>
+        <h2>Reviews that know your <span class="accent">whole codebase</span>, not just your diff.</h2>
+        <p class="section-lede" style="margin-bottom:0">Most AI reviewers can only see what's in the pull request. They miss the function callers your change just broke. They miss the invariant this method was designed to protect. They miss the test pattern your codebase has used for three years. We don't. On install, we read your <strong style="color:var(--text)">entire repo</strong> — every file, every function, every cross-reference — and we keep it up to date as you ship.</p>
+
+        <div class="cb-steps">
+          <div class="cb-step">
+            <div class="cb-step-tag">1 · INSTALL</div>
+            <div>
+              <h4>We read every file in your repo</h4>
+              <p>Deep ingestion on day one. We map the structure — imports, exports, call sites, type relationships. Happens once.</p>
+            </div>
+          </div>
+          <div class="cb-step">
+            <div class="cb-step-tag">2 · DAILY</div>
+            <div>
+              <h4>Incremental updates as you ship</h4>
+              <p>When you push, we re-read only what changed. The map self-updates without re-ingesting the whole codebase. No daily cost spikes. No latency tax.</p>
+            </div>
+          </div>
+          <div class="cb-step">
+            <div class="cb-step-tag">3 · REVIEW</div>
+            <div>
+              <h4>Every review pulls from full context</h4>
+              <p>Reviews query the map for the callers, the invariants, the patterns. The verdict reflects your <em>whole codebase</em>, not 87 lines of diff.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="cb-callout"><strong>The result:</strong> a 12-line PR can surface a bug in the caller it just broke.</div>
+      </div>
+
+      <div class="reveal" style="transition-delay:0.18s">
+        <div class="cb-graph-card">
+          <div class="cb-graph-head">
+            <span>your_repo · live map</span>
+            <span class="pulse"><span class="pulse-dot"></span> live</span>
+          </div>
+          <svg class="cb-graph-svg" viewBox="0 0 400 280" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <!-- edges -->
+            <path class="edge changed" d="M 200,140 L 110,80"/>
+            <path class="edge changed" d="M 200,140 L 290,80"/>
+            <path class="edge changed" d="M 200,140 L 130,210"/>
+            <path class="edge changed" d="M 200,140 L 280,210"/>
+            <path class="edge" d="M 110,80 L 60,50"/>
+            <path class="edge" d="M 110,80 L 165,40"/>
+            <path class="edge" d="M 290,80 L 340,50"/>
+            <path class="edge" d="M 290,80 L 235,40"/>
+            <path class="edge" d="M 130,210 L 70,250"/>
+            <path class="edge" d="M 130,210 L 185,250"/>
+            <path class="edge" d="M 280,210 L 340,250"/>
+            <path class="edge" d="M 280,210 L 220,250"/>
+            <!-- outer dim nodes -->
+            <circle class="node dim" cx="60" cy="50" r="8"/>
+            <circle class="node dim" cx="165" cy="40" r="8"/>
+            <circle class="node dim" cx="235" cy="40" r="8"/>
+            <circle class="node dim" cx="340" cy="50" r="8"/>
+            <circle class="node dim" cx="70" cy="250" r="8"/>
+            <circle class="node dim" cx="185" cy="250" r="8"/>
+            <circle class="node dim" cx="220" cy="250" r="8"/>
+            <circle class="node dim" cx="340" cy="250" r="8"/>
+            <!-- touched (direct callers) -->
+            <circle class="node touched" cx="110" cy="80" r="11"/>
+            <circle class="node touched" cx="290" cy="80" r="11"/>
+            <circle class="node touched" cx="130" cy="210" r="11"/>
+            <circle class="node touched" cx="280" cy="210" r="11"/>
+            <!-- center changed node -->
+            <circle class="node hot" cx="200" cy="140" r="16"/>
+            <!-- labels -->
+            <text class="label hot" x="200" y="120" text-anchor="middle">auth.py:142</text>
+            <text class="label" x="110" y="63" text-anchor="middle">login.py</text>
+            <text class="label" x="290" y="63" text-anchor="middle">session.py</text>
+            <text class="label" x="130" y="232" text-anchor="middle">middleware.py</text>
+            <text class="label" x="280" y="232" text-anchor="middle">handlers.py</text>
+          </svg>
+          <div class="cb-graph-stats">
+            <div class="cb-stat">
+              <div class="cb-stat-k">Files mapped</div>
+              <div class="cb-stat-v">341</div>
+            </div>
+            <div class="cb-stat">
+              <div class="cb-stat-k">Functions tracked</div>
+              <div class="cb-stat-v">12,407</div>
+            </div>
+            <div class="cb-stat">
+              <div class="cb-stat-k">Last full read</div>
+              <div class="cb-stat-v">47 days ago</div>
+            </div>
+            <div class="cb-stat">
+              <div class="cb-stat-k">Updates today</div>
+              <div class="cb-stat-v gold">23 changed</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ PRICING ═══════════ -->
+<section id="pricing" class="pricing">
+  <div class="wrap">
+    <div class="price-head reveal">
+      <span class="eyebrow">Pricing</span>
+      <h2 style="margin:0 auto 18px">Built for the team that <span class="accent">ships</span>, not the team that signs seats.</h2>
+      <p class="section-lede" style="margin:0 auto">Per-review, not per-developer. Your 12-person OSS project pays the same as your solo side project.</p>
+    </div>
+
+    <div class="price-grid reveal-stagger">
+      <!-- Free -->
+      <div class="plan">
+        <div class="plan-name">Free</div>
+        <div class="plan-price">
+          <span class="price-n">$0</span>
+          <span class="price-per">/ forever</span>
+        </div>
+        <div class="plan-sub">No card. No trial. Just review.</div>
+        <ul class="plan-features">
+          <li><svg class="check" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4,11 9,16 17,5"/></svg>1 review per day, any repo</li>
+          <li><svg class="check" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4,11 9,16 17,5"/></svg>Full reviewer — same engine as Pro</li>
+          <li><svg class="check" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4,11 9,16 17,5"/></svg>Public repos · GitHub App install</li>
+          <li><svg class="check" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4,11 9,16 17,5"/></svg>Posted as a PR review with verdict</li>
+          <li class="dim"><svg class="check dim" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="10" x2="15" y2="10"/></svg>Private repos require Pro</li>
+        </ul>
+        <a href="#install" class="plan-cta outline">Install free →</a>
+      </div>
+
+      <!-- Pro -->
+      <div class="plan">
+        <div class="plan-name">Pro</div>
+        <div class="plan-price">
+          <span class="price-n">$19</span>
+          <span class="price-per">/ month</span>
+        </div>
+        <div class="plan-sub">100 reviews · all repos · no per-seat fee</div>
+        <ul class="plan-features">
+          <li><svg class="check" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4,11 9,16 17,5"/></svg>100 reviews per month, public or private</li>
+          <li><svg class="check" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4,11 9,16 17,5"/></svg>Unlimited team members — no per-dev billing</li>
+          <li><svg class="check" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4,11 9,16 17,5"/></svg>Auto-review on every new PR (configurable)</li>
+          <li><svg class="check" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4,11 9,16 17,5"/></svg><code>@rhobear escalate</code> for higher-budget scrutiny</li>
+          <li><svg class="check" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4,11 9,16 17,5"/></svg>Priority queue when traffic spikes</li>
+          <li><svg class="check" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4,11 9,16 17,5"/></svg>Email + Slack digest of weekly findings</li>
+        </ul>
+        <a href="#install" class="plan-cta outline">Start Pro · $19/mo →</a>
+      </div>
+
+      <!-- Pro + Codebase -->
+      <div class="plan featured">
+        <div class="plan-flag">★ Best value</div>
+        <div class="plan-name">Pro + Codebase</div>
+        <div class="plan-price">
+          <span class="price-n">$24</span>
+          <span class="price-per">/ month</span>
+        </div>
+        <div class="plan-sub">Pro · plus full-codebase intelligence</div>
+        <ul class="plan-features">
+          <li><svg class="check" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4,11 9,16 17,5"/></svg><strong>Everything in Pro</strong> — 100 reviews, all repos, unlimited team</li>
+          <li><svg class="check" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4,11 9,16 17,5"/></svg><strong>Full-repo read on install</strong> — every file, every function mapped</li>
+          <li><svg class="check" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4,11 9,16 17,5"/></svg><strong>Live updates</strong> as your repo changes — no daily re-reads</li>
+          <li><svg class="check" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4,11 9,16 17,5"/></svg><strong>Every review</strong> queries full context, not just the diff</li>
+          <li><svg class="check" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4,11 9,16 17,5"/></svg>Catches the bug in the <em>caller</em> your diff just broke</li>
+          <li><svg class="check" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4,11 9,16 17,5"/></svg>Codebase patterns flagged when your PR breaks them</li>
+        </ul>
+        <a href="#install" class="plan-cta primary">Start Pro+Codebase · $24/mo →</a>
+      </div>
+    </div>
+
+    <p class="pricing-note"><strong>CodeRabbit Pro</strong> = $24 / dev / mo &nbsp;·&nbsp; <strong>CodeAnt</strong> = $24 / user / mo &nbsp;·&nbsp; They charge per seat. We charge per review. Ship faster, pay for what you use.</p>
+  </div>
+</section>
+
+<!-- ═══════════ BENCHMARKS ═══════════ -->
+<section id="bench">
+  <div class="wrap">
+    <div class="bench-intro reveal">
+      <div>
+        <span class="eyebrow">Benchmarks · receipts</span>
+        <h2>The exact scores. No hand-waving.</h2>
+      </div>
+      <p class="section-lede" style="margin:0">We don't hide our receipts. RHOBEAR Reviews is built on a top-tier coding model (<strong style="color:var(--text)">MiniMax-M2.7</strong>). Here's where it sits on the benchmarks that matter for code review — solving real software engineering tasks.</p>
+    </div>
+
+    <div class="bench-table reveal">
+      <div class="bench-row head">
+        <div>Model</div>
+        <div>SWE-bench</div>
+        <div>SWE-Pro</div>
+        <div>Context</div>
+      </div>
+      <div class="bench-row">
+        <div class="model us">
+          <span>MiniMax-M2.7</span>
+          <span class="badge">RHOBEAR</span>
+        </div>
+        <div class="score lead">78.0%</div>
+        <div class="score lead">56.22%</div>
+        <div class="score lead">204K</div>
+      </div>
+      <div class="bench-row">
+        <div class="model">Claude Opus 4.6</div>
+        <div class="score">~73%</div>
+        <div class="score">~57%</div>
+        <div class="score">200K</div>
+      </div>
+      <div class="bench-row">
+        <div class="model">Claude Sonnet 4.5</div>
+        <div class="score">~69%</div>
+        <div class="score">~48%</div>
+        <div class="score">200K</div>
+      </div>
+      <div class="bench-row">
+        <div class="model">GPT-5 (gpt-5-turbo)</div>
+        <div class="score">~71%</div>
+        <div class="score">~52%</div>
+        <div class="score">256K</div>
+      </div>
+      <div class="bench-row">
+        <div class="model dim">DeepSeek V4</div>
+        <div class="score dim">~68%</div>
+        <div class="score dim">~46%</div>
+        <div class="score dim">128K</div>
+      </div>
+    </div>
+    <p class="bench-footnote">SWE-bench / SWE-Pro: % of real GitHub issues from open-source repos that the model can solve from a PR diff. Higher is better. Sources at the foot of this page.</p>
+  </div>
+</section>
+
+<!-- ═══════════ TRANSPARENCY ═══════════ -->
+<section id="trans">
+  <div class="wrap">
+    <div class="trans-grid">
+      <div class="reveal">
+        <span class="eyebrow">Receipts, not marketing</span>
+        <h2>The same brain reviews our code. We just sell the seat next to ours.</h2>
+        <p class="section-lede" style="margin-bottom:0">RHOBEAR Reviews isn't a side hustle. The exact reviewer you install is the one we trust on our own ship-blocking PRs, every day. You're not getting a stripped-down trial — you're getting the production engine.</p>
+
+        <div class="trans-points">
+          <div class="trans-point">
+            <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L4 6v6c0 5 3.5 9.5 8 10 4.5-.5 8-5 8-10V6l-8-4z"/></svg></div>
+            <div>
+              <h4>Battle-tested on our own code</h4>
+              <p>Every line we ship runs through this reviewer first. If it's not good enough for our merges, it's not good enough for yours.</p>
+            </div>
+          </div>
+          <div class="trans-point">
+            <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg></div>
+            <div>
+              <h4>Your code never trains anyone</h4>
+              <p>Reviews run inference-only. No diff retained past the review. No data sold. No fine-tuning on your repo. Ever.</p>
+            </div>
+          </div>
+          <div class="trans-point">
+            <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg></div>
+            <div>
+              <h4>Hosted on our always-on infra</h4>
+              <p>Cloud-resident, owner-operated. No SaaS middleman. No Zapier in the loop. If we're down, we already know — it's our pager too.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="reveal" style="transition-delay:0.18s">
+        <div class="trans-card">
+          <div class="receipt-head">
+            <span>receipt · single review</span>
+            <span class="vchip">v1.0</span>
+          </div>
+          <div class="receipt-row"><span class="k">Reviewer</span><span class="v">RHOBEAR Reviews</span></div>
+          <div class="receipt-row"><span class="k">PR scanned</span><span class="v">87 files · ~25K LOC</span></div>
+          <div class="receipt-row"><span class="k">Categories checked</span><span class="v">9</span></div>
+          <div class="receipt-row"><span class="k">Latency p50</span><span class="v">&lt; 2 min</span></div>
+          <div class="receipt-row"><span class="k">Findings emitted</span><span class="v">3–12 per PR</span></div>
+          <div class="receipt-row"><span class="k">SWE-bench score</span><span class="v">78.0%</span></div>
+          <div class="receipt-row total"><span class="k">Your cost</span><span class="v">$0.19</span></div>
+          <div class="receipt-foot">At Pro · $19/mo ÷ 100 reviews. Free tier: $0.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ FAQ ═══════════ -->
+<section id="faq">
+  <div class="wrap">
+    <div class="reveal">
+      <span class="eyebrow">FAQ</span>
+      <h2>Honest answers to the obvious questions.</h2>
+      <p class="section-lede">We're a small shop. We answer real emails. Anything not here, ping us.</p>
+    </div>
+
+    <div class="faq-grid reveal-stagger">
+      <div class="faq">
+        <h4>What's a "review"?</h4>
+        <p>One pass over one pull request. Mention <code>@rhobear</code> ten times on the same PR — still one review. Open a new PR — that's review two.</p>
+      </div>
+      <div class="faq">
+        <h4>Do I need a credit card for the free tier?</h4>
+        <p>No. Install the GitHub App, get one review per day, period. We'll only ask for payment if you want Pro.</p>
+      </div>
+      <div class="faq">
+        <h4>How is this different from CodeRabbit or CodeAnt?</h4>
+        <p>Three things. <strong>Pricing</strong> — we charge per review, not per developer. A 10-person team pays the same as a solo dev. <strong>Speed</strong> — verdicts land in under 2 minutes, where competitors take 2-5 minutes of thinking before they post anything. <strong>Context</strong> — our Codebase tier reads your whole repo, so reviews catch the bugs in callers most tools never see.</p>
+      </div>
+      <div class="faq">
+        <h4>What does it actually look for?</h4>
+        <p>Correctness bugs, security flaws (injection, auth bypass, secret leaks), scope creep, missing tests, broken contracts, performance regressions, error-handling gaps. Each finding gets a severity, evidence, and a one-line fix recommendation.</p>
+      </div>
+      <div class="faq">
+        <h4>How does full codebase reading work?</h4>
+        <p>On install, we read every file in your repo and build a queryable map — imports, exports, call sites, type relationships. After that, pushes only update what changed. Every PR review reflects your whole codebase, not just the diff.</p>
+      </div>
+      <div class="faq">
+        <h4>What happens to my code?</h4>
+        <p>Pulled via GitHub App permission, sent inference-only for the review, dropped from memory the moment the review posts. We don't store diffs. We don't train on your code. We don't sell anything to anyone.</p>
+      </div>
+      <div class="faq">
+        <h4>Does it work on monorepos / large PRs?</h4>
+        <p>A 204K-token context covers the vast majority of real PRs. For monorepo behemoths, the Codebase tier's repo map lets us review one subsystem at a time with full cross-reference awareness.</p>
+      </div>
+      <div class="faq">
+        <h4>What if I burn 100 reviews mid-month?</h4>
+        <p>You can buy a top-up pack (50 reviews for $9) or wait for the next billing cycle. No surprise charges, no auto-overage.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ FINAL CTA ═══════════ -->
+<section id="install" class="final">
+  <div class="wrap reveal">
+    <h2>Stop paying per developer.<br><span class="accent">Start paying per review.</span></h2>
+    <p>Install the GitHub App. First review is on us — every day, forever.</p>
+    <div class="final-ctas">
+      <a href="https://github.com/apps/rhobear-reviews/installations/new" class="btn-primary">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.4 3-.405 1.02.005 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+        Install on GitHub
+      </a>
+      <a href="#pricing" class="btn-secondary">See pricing →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ FOOTER ═══════════ -->
+<footer>
+  <div class="foot">
+    <div class="foot-brand">
+      <span class="brand-mark"><svg><use href="#rb-mark"/></svg></span>
+      <span>© 2026 RHOBEAR · A SunSponge LLC product · Built on a $5 VPS, then graduated.</span>
+    </div>
+    <div class="foot-links">
+      <a href="/privacy">Privacy</a>
+      <a href="/terms">Terms</a>
+      <a href="https://github.com/rhobear">GitHub</a>
+      <a href="mailto:reviews@rhobear.ai">Contact</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // ═══════════ REVEAL ON SCROLL ═══════════
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('in');
+        io.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.12, rootMargin: '0px 0px -80px 0px' });
+
+  document.querySelectorAll('.reveal, .reveal-stagger').forEach(el => io.observe(el));
+
+  // ═══════════ ACTIVE NAV STATE ═══════════
+  const sections = ['how','codebase','pricing','bench','trans','faq'].map(id => document.getElementById(id));
+  const navLinks = document.querySelectorAll('a[data-nav]');
+  const navIO = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const id = e.target.id;
+        navLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + id));
+      }
+    });
+  }, { rootMargin: '-30% 0px -60% 0px' });
+  sections.forEach(s => s && navIO.observe(s));
+</script>
+
+</body>
+</html>
