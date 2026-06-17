@@ -336,6 +336,31 @@
   <div class="glow-orb orb-3"></div>
 </div>
 
+<style>
+  .rb-ecosystem { font-family: "JetBrains Mono", ui-monospace, Menlo, monospace; font-size: 12px; background: transparent; border-bottom: 1px solid rgba(255,255,255,0.08); height: 28px; line-height: 28px; }
+  .rb-ecosystem-inner { max-width: 1200px; margin: 0 auto; padding: 0 20px; display: flex; gap: 10px; align-items: center; }
+  .rb-eco-brand { font-weight: 600; color: #f5ecd9; text-decoration: none; letter-spacing: 0.05em; }
+  .rb-eco-sep { color: rgba(255,255,255,0.20); }
+  .rb-eco-link { color: rgba(255,255,255,0.55); text-decoration: none; }
+  .rb-eco-link:hover { color: var(--gold, #ffb800); }
+  .rb-eco-link.current { color: var(--gold, #ffb800); font-weight: 600; }
+  .rb-unified-footer { font-family: "JetBrains Mono", ui-monospace, Menlo, monospace; font-size: 12px; text-align: center; padding: 28px 20px; border-top: 1px solid var(--border, rgba(255,255,255,0.10)); color: rgba(255,255,255,0.55); }
+  .rb-unified-footer a { color: inherit; text-decoration: none; }
+  .rb-unified-footer a:hover { color: var(--gold, #ffb800); }
+  .rb-unified-footer .rb-mark { width: 16px; height: 16px; vertical-align: -3px; margin: 0 4px; }
+  .rb-unified-footer .rb-foot-line { margin: 4px 0; }
+  .rb-unified-footer .rb-foot-nav a { margin: 0 4px; }
+</style>
+<nav class="rb-ecosystem" aria-label="RHOBEAR ecosystem">
+  <div class="rb-ecosystem-inner">
+    <a href="https://rhobear.ai/" class="rb-eco-brand">RHOBEAR</a>
+    <span class="rb-eco-sep">·</span>
+    <a href="https://rhobear.ai/" class="rb-eco-link">Hub</a>
+    <a href="https://reviews.rhobear.ai/" class="rb-eco-link current">Reviews</a>
+    <a href="https://sales.rhobear.ai/" class="rb-eco-link">Sales</a>
+    <a href="https://brain.rhobear.ai/" class="rb-eco-link">brain (API)</a>
+  </div>
+</nav>
 <!-- ═══════════ TOPBAR ═══════════ -->
 <header class="top">
   <div class="top-inner">
@@ -823,19 +848,20 @@
 </section>
 
 <!-- ═══════════ FOOTER ═══════════ -->
-<footer>
-  <div class="foot">
-    <div class="foot-brand">
-      <span class="brand-mark"><svg><use href="#rb-mark"/></svg></span>
-      <span>© 2026 RHOBEAR · A SunSponge LLC product · Built on a $5 VPS, then graduated.</span>
-    </div>
-    <div class="foot-links">
-      <a href="/privacy">Privacy</a>
-      <a href="/terms">Terms</a>
-      <a href="https://github.com/rhobear">GitHub</a>
-      <a href="mailto:reviews@rhobear.ai">Contact</a>
-    </div>
+<footer class="rb-unified-footer">
+  <div class="rb-foot-line">
+    <svg class="rb-mark" aria-hidden="true"><use href="#rb-mark"/></svg>
+    © 2026 RHOBEAR · A SunSponge LLC product
   </div>
+  <nav class="rb-foot-nav" aria-label="RHOBEAR ecosystem">
+    <a href="https://rhobear.ai/">Hub</a> ·
+    <a href="https://reviews.rhobear.ai/">Reviews</a> ·
+    <a href="https://sales.rhobear.ai/">Sales</a> ·
+    <a href="https://brain.rhobear.ai/">brain</a> ·
+    <a href="https://github.com/deariencampbell1-sys">GitHub</a> ·
+    <a href="/privacy">Privacy</a> ·
+    <a href="/terms">Terms</a>
+  </nav>
 </footer>
 
 <script>
