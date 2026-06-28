@@ -267,10 +267,10 @@
 <header class="dtop">
   <div class="dtop-in">
     <a href="index.html" class="brand"><span class="brand-mark"><svg><use href="#rb-mark"/></svg></span><span><b>RHOBEAR</b> <span>Reviews</span></span></a>
-    <button class="repo-pick"><span class="dot"></span> acme-co/payments-api <span class="chev">▾</span></button>
+    <button class="repo-pick"><span class="dot"></span><span id="repoPickLabel">reviews.rhobear.ai</span> <span class="chev">&#x25BE;</span></button>
     <div class="dtop-right">
-      <span class="demo-badge">Demo data</span>
-      <a href="https://github.com/apps/rhobear-reviews/installations/new" class="gh-btn">
+      <span class="demo-badge" id="demoBadge">loading…</span>
+      <a href="https://reviews.rhobear.ai/auth/github/login" class="gh-btn" id="ghBtn">
         <svg viewBox="0 0 24 24"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.4 3-.405 1.02.005 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
         Sign in with GitHub
       </a>
@@ -291,7 +291,7 @@
     <div class="side-grp">Account</div>
     <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg> Usage</a>
     <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> Settings</a>
-    <div class="side-foot">Plan · <b>Pro + Codebase</b><br>Reviews this cycle · <b>62 / 100</b><br>Resets in <b>11 days</b></div>
+    <div class="side-foot">Plan · <b>Pro + Codebase</b><br>Reviews this cycle · <b id="sidebarReviewCount">—</b><br>Resets in <b>11 days</b></div>
   </aside>
 
   <!-- main -->
@@ -299,50 +299,50 @@
     <div class="main-head">
       <div>
         <h1>Overview</h1>
-        <div class="sub">Your scanner across <b style="color:var(--text)">8 repos</b> · last 30 days</div>
+        <div class="sub" id="repoSub">Your scanner across <b id="reposCount" style="color:var(--text)">—</b> repos · last 30 days</div>
       </div>
       <div class="range">
         <button>7d</button><button class="on">30d</button><button>90d</button><button>All</button>
       </div>
     </div>
 
-    <!-- KPI tiles — the four you asked for -->
+    <!-- KPI tiles -->
     <div class="kpis">
       <div class="kpi reveal">
         <div class="kpi-top">
           <span class="kpi-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
-          <span class="kpi-delta up">▲ 18%</span>
+          <span id="kpiReviewsDelta"></span>
         </div>
-        <div class="kpi-v" data-count="1284">1,284</div>
+        <div class="kpi-v" id="kpiReviews" data-count="0">—</div>
         <div class="kpi-l">Reviews run</div>
-        <div class="kpi-spark" data-spark="6,9,7,11,8,13,10,14,12,16,13,18"></div>
+        <div class="kpi-spark" id="sparkReviews"></div>
       </div>
       <div class="kpi reveal">
         <div class="kpi-top">
           <span class="kpi-ic red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg></span>
-          <span class="kpi-delta bad">▲ 6%</span>
+          <span id="kpiBugsDelta"></span>
         </div>
-        <div class="kpi-v" data-count="3947">3,947</div>
+        <div class="kpi-v" id="kpiBugs" data-count="0">—</div>
         <div class="kpi-l">Bugs caught</div>
-        <div class="kpi-spark red" data-spark="14,11,16,12,18,15,20,17,22,19,24,21"></div>
+        <div class="kpi-spark red" id="sparkBugs"></div>
       </div>
       <div class="kpi reveal">
         <div class="kpi-top">
           <span class="kpi-ic blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
-          <span class="kpi-delta down">▼ 9%</span>
+          <span id="kpiTimeDelta"></span>
         </div>
-        <div class="kpi-v">1m 38s</div>
+        <div class="kpi-v" id="kpiTime">—</div>
         <div class="kpi-l">Median run time</div>
-        <div class="kpi-spark blue" data-spark="18,16,17,14,15,13,14,12,13,11,12,10"></div>
+        <div class="kpi-spark blue" id="sparkTime"></div>
       </div>
       <div class="kpi reveal">
         <div class="kpi-top">
           <span class="kpi-ic green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg></span>
-          <span class="kpi-delta down">▼ 12%</span>
+          <span id="kpiVerdictDelta"></span>
         </div>
-        <div class="kpi-v">1m 12s</div>
+        <div class="kpi-v" id="kpiVerdict">—</div>
         <div class="kpi-l">Avg time to verdict</div>
-        <div class="kpi-spark green" data-spark="20,18,19,16,17,15,14,13,12,11,10,9"></div>
+        <div class="kpi-spark green" id="sparkVerdict"></div>
       </div>
     </div>
 
@@ -356,15 +356,11 @@
         <div class="chart" id="trend"></div>
         <div class="legend"><span><i class="g"></i> Reviews run</span><span><i class="r"></i> Bugs caught</span></div>
       </div>
-      <div class="card reveal">
-        <div class="card-head"><h3>Findings by severity</h3><span class="meta">3,947 total</span></div>
+      <div class="card reveal" id="severityCard">
+        <div class="card-head"><h3>Findings by severity</h3><span class="meta" id="sevMeta">—</span></div>
         <div class="donut-wrap">
-          <div class="donut"><div class="donut-c"><b>868</b><small>BLOCKING</small></div></div>
-          <div class="sev-list">
-            <div class="sev"><span class="sw h"></span><span class="nm">High · blocking</span><span class="n">868</span></div>
-            <div class="sev"><span class="sw m"></span><span class="nm">Medium</span><span class="n">1,263</span></div>
-            <div class="sev"><span class="sw l"></span><span class="nm">Low · advisory</span><span class="n">1,816</span></div>
-          </div>
+          <div class="donut" id="donutChart"><div class="donut-c"><b id="sevTotal">—</b><small id="sevLabel">Loading</small></div></div>
+          <div class="sev-list" id="sevList"></div>
         </div>
       </div>
     </div>
@@ -375,26 +371,12 @@
         <div class="card-head"><h3>Recent runs</h3><span class="meta">auto-refreshing</span></div>
         <table class="runs">
           <thead><tr><th>PR</th><th class="h-repo">Repo</th><th>Files</th><th>Findings</th><th>Verdict</th><th>Time</th></tr></thead>
-          <tbody>
-            <tr><td class="pr">#1421</td><td class="repo h-repo">payments-api</td><td>87</td><td class="find" style="color:var(--red)">2 blocking</td><td><span class="verdict chg">REQUEST_CHANGES</span></td><td class="dur">1m 29s</td></tr>
-            <tr><td class="pr">#1420</td><td class="repo h-repo">web-app</td><td>14</td><td class="find" style="color:var(--green)">clean</td><td><span class="verdict acc">ACCEPT</span></td><td class="dur">52s</td></tr>
-            <tr><td class="pr">#1419</td><td class="repo h-repo">billing-svc</td><td>33</td><td class="find" style="color:var(--gold)">4 medium</td><td><span class="verdict com">COMMENT</span></td><td class="dur">1m 47s</td></tr>
-            <tr><td class="pr">#1418</td><td class="repo h-repo">payments-api</td><td>9</td><td class="find" style="color:var(--red)">1 blocking</td><td><span class="verdict chg">REQUEST_CHANGES</span></td><td class="dur">41s</td></tr>
-            <tr><td class="pr">#1417</td><td class="repo h-repo">infra</td><td>21</td><td class="find" style="color:var(--green)">clean</td><td><span class="verdict acc">ACCEPT</span></td><td class="dur">1m 03s</td></tr>
-            <tr><td class="pr">#1416</td><td class="repo h-repo">web-app</td><td>62</td><td class="find" style="color:var(--gold)">7 medium</td><td><span class="verdict com">COMMENT</span></td><td class="dur">2m 11s</td></tr>
-          </tbody>
+          <tbody id="runsBody"></tbody>
         </table>
       </div>
       <div class="card reveal">
         <div class="card-head"><h3>What we caught</h3><span class="meta">by category</span></div>
-        <div class="cat">
-          <div class="cat-row"><div class="cl"><span class="nm">Security &amp; auth</span><span class="n">1,104</span></div><div class="cat-track"><i style="width:92%"></i></div></div>
-          <div class="cat-row"><div class="cl"><span class="nm">Correctness bugs</span><span class="n">958</span></div><div class="cat-track"><i style="width:80%"></i></div></div>
-          <div class="cat-row"><div class="cl"><span class="nm">Missing tests</span><span class="n">612</span></div><div class="cat-track"><i style="width:51%"></i></div></div>
-          <div class="cat-row"><div class="cl"><span class="nm">Broken contracts</span><span class="n">487</span></div><div class="cat-track"><i style="width:41%"></i></div></div>
-          <div class="cat-row"><div class="cl"><span class="nm">Performance</span><span class="n">419</span></div><div class="cat-track"><i style="width:35%"></i></div></div>
-          <div class="cat-row"><div class="cl"><span class="nm">Error handling</span><span class="n">367</span></div><div class="cat-track"><i style="width:31%"></i></div></div>
-        </div>
+        <div class="cat" id="catList"></div>
       </div>
     </div>
 
@@ -402,7 +384,7 @@
     <div class="card reveal" id="scan" style="margin-bottom:18px;scroll-margin-top:80px">
       <div class="card-head">
         <h3>Code graph scanner</h3>
-        <span class="meta">map the repo · scan on demand</span>
+        <span class="meta">map the repo · scan on demand &nbsp;<small style="color:var(--text-dim)">(local preview)</small></span>
       </div>
       <div class="scan-form">
         <div class="field">
@@ -424,8 +406,8 @@
       </div>
       <div class="scan-status">
         <div class="scan-bar"><i id="scanBar"></i></div>
-        <div class="scan-log" id="scanLog"><span class="dim"># idle — last scan 2h ago. Press “Run scan” to map the graph and score risk.</span></div>
-        <div class="scan-meta"><span>Files mapped <b>341</b></span><span>Functions <b>12,407</b></span><span>Findings <b id="scanFind">12</b></span><span>Graph age <b>2h</b></span></div>
+        <div class="scan-log" id="scanLog"><span class="dim">// local preview — not connected to a live scanner</span></div>
+        <div class="scan-meta"><span>Files mapped <b>—</b></span><span>Functions <b>—</b></span><span>Findings <b id="scanFind">—</b></span><span>Graph age <b>—</b></span></div>
       </div>
     </div>
 
@@ -433,7 +415,7 @@
     <div class="card reveal" id="trainer" style="margin-bottom:18px;scroll-margin-top:80px">
       <div class="card-head">
         <h3>Bot trainer · <span style="color:var(--gold)">promptfoo</span>-compatible</h3>
-        <span class="meta">eval your bots from here</span>
+        <span class="meta">eval your bots from here &nbsp;<small style="color:var(--text-dim)">(local preview)</small></span>
       </div>
       <div class="pf">
         <!-- config -->
@@ -490,12 +472,12 @@
       </div>
     </div>
 
-    <div class="signin-strip reveal">
+    <div class="signin-strip reveal" id="signinStrip">
       <div class="t">
-        <h4>This is a demo of what your dashboard looks like.</h4>
-        <p>Sign in with GitHub to load your repos, your runs, and your real numbers — free, no card.</p>
+        <h4 id="signinStripH4">Live data from the RHOBEAR firehose.</h4>
+        <p id="signinStripP">Sign in with GitHub to scope the dashboard to your repos — free, no card.</p>
       </div>
-      <a href="https://github.com/apps/rhobear-reviews/installations/new" class="gh-btn">
+      <a href="https://reviews.rhobear.ai/auth/github/login" class="gh-btn">
         <svg viewBox="0 0 24 24"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.4 3-.405 1.02.005 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
         Sign in with GitHub
       </a>
@@ -504,92 +486,380 @@
 </div>
 
 <script>
-  // reveal
-  const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}}),{threshold:0.08});
-  document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+// ── API base ──
+var DASH_API = 'https://reviews.rhobear.ai';
 
-  // sparklines in KPI tiles
-  document.querySelectorAll('.kpi-spark').forEach(el=>{
-    const vals=el.dataset.spark.split(',').map(Number); const max=Math.max(...vals);
-    el.innerHTML=vals.map((v,i)=>`<i style="height:${Math.round(v/max*100)}%;animation-delay:${i*0.04}s"></i>`).join('');
-  });
+// Dev: auto-point to local API when served from localhost
+if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+  DASH_API = 'http://127.0.0.1:7790';
+}
 
-  // trend bar chart (reviews + bugs overlay), 14 days
-  const reviews=[58,64,52,71,66,80,74,69,88,79,93,84,97,102];
-  const bugs   =[12,15,11,18,16,22,19,17,24,21,27,23,28,31];
-  const maxR=Math.max(...reviews);
-  const days=['','','','','','','','','','','','','y’day','today'];
-  document.getElementById('trend').innerHTML=reviews.map((r,i)=>{
-    const h=Math.round(r/maxR*100); const bh=Math.round(bugs[i]/r*100);
-    return `<div class="bar"><div class="tip"><b>${r}</b> reviews · <span class="r">${bugs[i]}</span> bugs</div>`+
-           `<i style="height:${h}%;animation-delay:${i*0.05}s"><span class="bugs" style="height:${bh}%"></span></i>`+
-           `<span>${days[i]||'·'}</span></div>`;
-  }).join('');
+// ── Helpers ──
+function secToHuman(s) {
+  var m = Math.floor(s / 60);
+  var sec = Math.round(s % 60);
+  if (m === 0) return sec + 's';
+  return m + 'm ' + (sec < 10 ? '0' : '') + sec + 's';
+}
 
-  // count-up on the two big integer KPIs
-  function countUp(el){
-    const target=+el.dataset.count; const t0=performance.now(); const dur=1100;
-    function tick(now){const p=Math.min((now-t0)/dur,1); const e=1-Math.pow(1-p,3);
-      el.textContent=Math.round(target*e).toLocaleString(); if(p<1)requestAnimationFrame(tick);}
-    requestAnimationFrame(tick);
+function deltaHTML(pct, kind) {
+  if (pct == null || pct === undefined) return '';
+  var abs = Math.round(Math.abs(pct) * 100);
+  var cls, arrow;
+  if (kind === 'bugs') {
+    cls = pct >= 0 ? 'bad' : 'down';
+    arrow = pct >= 0 ? '\u25B2' : '\u25BC';
+  } else if (kind === 'reviews') {
+    cls = pct >= 0 ? 'up' : 'bad';
+    arrow = pct >= 0 ? '\u25B2' : '\u25BC';
+  } else {
+    // time: down is good (faster)
+    cls = pct <= 0 ? 'up' : 'bad';
+    arrow = pct <= 0 ? '\u25BC' : '\u25B2';
   }
-  const cio=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){countUp(e.target);cio.unobserve(e.target);}}),{threshold:0.5});
-  document.querySelectorAll('.kpi-v[data-count]').forEach(el=>cio.observe(el));
+  return '<span class="kpi-delta ' + cls + '">' + arrow + ' ' + abs + '%</span>';
+}
 
-  // ── segmented / range toggles ──
-  document.querySelectorAll('.seg, .range').forEach(g=>g.addEventListener('click',e=>{
-    const b=e.target.closest('button'); if(!b)return;
-    g.querySelectorAll('button').forEach(x=>x.classList.remove('on')); b.classList.add('on');
-  }));
+function countUp(el) {
+  var target = +el.dataset.count;
+  if (!target) { el.textContent = '0'; return; }
+  var t0 = performance.now();
+  var dur = 1100;
+  function tick(now) {
+    var p = Math.min((now - t0) / dur, 1);
+    var e = 1 - Math.pow(1 - p, 3);
+    el.textContent = Math.round(target * e).toLocaleString();
+    if (p < 1) requestAnimationFrame(tick);
+    else el.textContent = target.toLocaleString();
+  }
+  requestAnimationFrame(tick);
+}
 
-  // ── code graph scan (mock run) ──
-  const scanBtn=document.getElementById('scanBtn'), scanBar=document.getElementById('scanBar'),
-        scanLog=document.getElementById('scanLog'), scanFind=document.getElementById('scanFind');
-  scanBtn.addEventListener('click',()=>{
-    const repo=document.getElementById('scanRepo').value;
-    scanBtn.disabled=true; scanBar.style.width='0';
-    const steps=[
-      ['reading <span class="k">'+repo+'</span> · main', 12],
-      ['mapping imports · exports · call sites', 34],
-      ['building code graph · 341 files', 58],
-      ['scoring 9 categories of risk', 81],
+function spark(el, vals) {
+  if (!vals.length) return;
+  var max = Math.max.apply(null, vals);
+  if (max === 0) max = 1;
+  var h = '';
+  for (var i = 0; i < vals.length; i++) {
+    var pct = Math.round(vals[i] / max * 100);
+    var delay = (i * 0.04).toFixed(2);
+    h += '<i style="height:' + pct + '%;animation-delay:' + delay + 's"></i>';
+  }
+  el.innerHTML = h;
+}
+
+// ── Renderers ──
+function renderKpis(d) {
+  var re = document.getElementById('kpiReviews');
+  re.setAttribute('data-count', d.reviews_run);
+  re.textContent = '0';
+  countUp(re);
+  var rd = d.deltas.reviews_run;
+  document.getElementById('kpiReviewsDelta').innerHTML = rd && rd.pct != null ? deltaHTML(rd.pct, 'reviews') : '';
+
+  var be = document.getElementById('kpiBugs');
+  be.setAttribute('data-count', d.bugs_caught);
+  be.textContent = '0';
+  countUp(be);
+  var bd = d.deltas.bugs_caught;
+  document.getElementById('kpiBugsDelta').innerHTML = bd && bd.pct != null ? deltaHTML(bd.pct, 'bugs') : '';
+
+  document.getElementById('kpiTime').textContent = secToHuman(d.median_run_time_s);
+  var td = d.deltas.median_run_time_s;
+  document.getElementById('kpiTimeDelta').innerHTML = td && td.pct != null ? deltaHTML(td.pct, 'time') : '';
+
+  document.getElementById('kpiVerdict').textContent = secToHuman(d.avg_time_to_verdict_s);
+  var vd = d.deltas.avg_time_to_verdict_s;
+  document.getElementById('kpiVerdictDelta').innerHTML = vd && vd.pct != null ? deltaHTML(vd.pct, 'time') : '';
+
+  // Update sidebar review count
+  var sbc = document.getElementById('sidebarReviewCount');
+  if (sbc) sbc.textContent = d.reviews_run.toLocaleString();
+}
+
+function renderTrend(data) {
+  var revs = [];
+  var bugs = [];
+  for (var i = 0; i < data.length; i++) {
+    revs.push(data[i].reviews);
+    bugs.push(data[i].bugs);
+  }
+
+  spark(document.getElementById('sparkReviews'), revs);
+  spark(document.getElementById('sparkBugs'), bugs);
+  spark(document.getElementById('sparkTime'), revs.slice().reverse());
+  spark(document.getElementById('sparkVerdict'), revs.slice().reverse());
+
+  var maxR = 1;
+  for (var i = 0; i < revs.length; i++) { if (revs[i] > maxR) maxR = revs[i]; }
+
+  var h = '';
+  for (var i = 0; i < data.length; i++) {
+    var d = data[i];
+    var barH = Math.round(d.reviews / maxR * 100);
+    var bugH = d.reviews === 0 ? 0 : Math.round(d.bugs / d.reviews * 100);
+    var delay = (i * 0.05).toFixed(2);
+    var label = '';
+    if (i === data.length - 2) label = 'y\'day';
+    else if (i === data.length - 1) label = 'today';
+    else label = '\u00B7';
+    h += '<div class="bar"><div class="tip"><b>' + d.reviews + '</b> reviews \u00B7 <span class="r">' + d.bugs + '</span> bugs</div>' +
+         '<i style="height:' + barH + '%;animation-delay:' + delay + 's"><span class="bugs" style="height:' + bugH + '%"></span></i>' +
+         '<span>' + label + '</span></div>';
+  }
+  document.getElementById('trend').innerHTML = h;
+}
+
+function renderSeverity(d) {
+  var total = d.high + d.medium + d.low;
+  var hp = Math.round(d.high / total * 100);
+  var mp = Math.round(d.medium / total * 100);
+  document.getElementById('donutChart').style.background =
+    'conic-gradient(var(--red) 0 ' + hp + '%, var(--gold) ' + hp + '% ' + (hp + mp) + '%, var(--blue) ' + (hp + mp) + '% 100%)';
+  document.getElementById('sevTotal').textContent = d.high;
+  document.getElementById('sevLabel').textContent = 'BLOCKING';
+  document.getElementById('sevList').innerHTML =
+    '<div class="sev"><span class="sw h"></span><span class="nm">High \u00B7 blocking</span><span class="n">' + d.high + '</span></div>' +
+    '<div class="sev"><span class="sw m"></span><span class="nm">Medium</span><span class="n">' + d.medium + '</span></div>' +
+    '<div class="sev"><span class="sw l"></span><span class="nm">Low \u00B7 advisory</span><span class="n">' + d.low + '</span></div>';
+  document.getElementById('sevMeta').textContent = total.toLocaleString() + ' total';
+}
+
+function renderCategories(data) {
+  var max = 0;
+  for (var i = 0; i < data.length; i++) { if (data[i].count > max) max = data[i].count; }
+  if (max === 0) max = 1;
+  var h = '';
+  for (var i = 0; i < data.length; i++) {
+    var d = data[i];
+    var pct = Math.round(d.count / max * 100);
+    h += '<div class="cat-row"><div class="cl"><span class="nm">' + d.name + '</span><span class="n">' + d.count.toLocaleString() + '</span></div>' +
+         '<div class="cat-track"><i style="width:' + pct + '%"></i></div></div>';
+  }
+  document.getElementById('catList').innerHTML = h;
+}
+
+function renderRecent(data) {
+  var h = '';
+  for (var i = 0; i < data.length; i++) {
+    var d = data[i];
+    var prNum = (d.pr || '').split('/').pop();
+    var fc = 'var(--green)', ft = 'clean';
+    if (d.findings > 0) {
+      fc = d.verdict === 'REQUEST_CHANGES' ? 'var(--red)' : 'var(--gold)';
+      ft = d.findings + ' finding' + (d.findings > 1 ? 's' : '');
+    }
+    var vcls = 'com';
+    if (d.verdict === 'ACCEPT') vcls = 'acc';
+    else if (d.verdict === 'REQUEST_CHANGES') vcls = 'chg';
+    var repoShort = (d.repo || '').split('/').pop();
+    h += '<tr>' +
+      '<td class="pr">#' + prNum + '</td>' +
+      '<td class="repo h-repo">' + repoShort + '</td>' +
+      '<td>' + (d.files != null ? d.files : '\u2014') + '</td>' +
+      '<td class="find" style="color:' + fc + '">' + ft + '</td>' +
+      '<td><span class="verdict ' + vcls + '">' + d.verdict + '</span></td>' +
+      '<td class="dur">' + secToHuman(d.duration_s) + '</td>' +
+      '</tr>';
+  }
+  document.getElementById('runsBody').innerHTML = h;
+}
+
+function showOffline() {
+  if (document.getElementById('offlineBar')) return;
+  var bar = document.createElement('div');
+  bar.id = 'offlineBar';
+  bar.style.cssText = 'background:rgba(248,113,113,0.12);border-bottom:1px solid rgba(248,113,113,0.3);padding:10px 30px;font-family:var(--mono);font-size:12px;color:var(--red);text-align:center';
+  bar.textContent = '\u26A0\uFE0F Dashboard offline \u2014 API unreachable. Retrying in 30s\u2026';
+  var layout = document.querySelector('.layout');
+  if (layout) layout.prepend(bar);
+}
+
+function loadingRow() {
+  return '<tr><td colspan="6" style="color:var(--text-dim);text-align:center;padding:30px;font-family:var(--mono);font-size:13px">Loading\u2026</td></tr>';
+}
+
+function init() {
+  // Show loading state in empty containers
+  var runsBody = document.getElementById('runsBody');
+  if (runsBody && !runsBody.innerHTML.trim()) runsBody.innerHTML = loadingRow();
+
+  // Range toggles dispatch a re-fetch with different ?days param
+  var rangeBtns = document.querySelectorAll('.range button');
+  if (rangeBtns.length) {
+    for (var ri = 0; ri < rangeBtns.length; ri++) {
+      rangeBtns[ri].addEventListener('click', function() {
+        var days = 7;
+        if (this.textContent === '30d') days = 30;
+        else if (this.textContent === '90d') days = 90;
+        else if (this.textContent === 'All') days = 365;
+        fetch(DASH_API + '/api/dash/trend?days=' + days, {credentials:'include'})
+          .then(function(r) { return r.json(); })
+          .then(renderTrend)
+          .catch(function() {});
+      });
+    }
+  }
+
+  // Kick off API fetches
+  fetch(DASH_API + '/api/dash/me', {credentials:'include'})
+    .then(function(r) {
+      if (!r.ok) throw new Error('me failed');
+      return r.json();
+    })
+    .then(function(me) {
+      var badge = document.getElementById('demoBadge');
+      if (me.mode !== 'owner-demo' && me.login && me.login !== 'owner-demo') {
+        // Signed in
+        if (badge) {
+          badge.textContent = me.login;
+          badge.style.color = 'var(--green)';
+          badge.style.borderColor = 'rgba(74,222,128,0.28)';
+          badge.style.background = 'rgba(74,222,128,0.08)';
+        }
+        // Update sign-in button
+        var ghBtn = document.getElementById('ghBtn');
+        if (ghBtn) {
+          ghBtn.href = DASH_API + '/auth/github/logout';
+          ghBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.4 3-.405 1.02.005 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>' + me.login;
+        }
+        // Remove sign-in strip
+        var strip = document.getElementById('signinStrip');
+        if (strip) strip.remove();
+        // Update repo count
+        if (me.repos && me.repos.length) {
+          document.getElementById('reposCount').textContent = me.repos.length;
+          document.getElementById('repoPickLabel').textContent = me.login;
+        }
+      } else {
+        // Owner-demo / not signed in
+        if (badge) {
+          badge.textContent = 'live \u2014 sign in for your repos';
+          badge.style.color = 'var(--gold)';
+          badge.style.borderColor = 'rgba(255,184,0,0.28)';
+          badge.style.background = 'var(--gold-glow)';
+        }
+        var stripH4 = document.getElementById('signinStripH4');
+        if (stripH4) stripH4.textContent = 'Live data from the RHOBEAR firehose.';
+        var stripP = document.getElementById('signinStripP');
+        if (stripP) stripP.textContent = 'Sign in with GitHub to scope the dashboard to your repos \u2014 free, no card.';
+      }
+    })
+    .catch(function() {});
+
+  // Fetch all dash data in parallel
+  Promise.all([
+    fetch(DASH_API + '/api/dash/kpis', {credentials:'include'}).then(function(r) { return r.json(); }),
+    fetch(DASH_API + '/api/dash/trend?days=14', {credentials:'include'}).then(function(r) { return r.json(); }),
+    fetch(DASH_API + '/api/dash/severity', {credentials:'include'}).then(function(r) { return r.json(); }),
+    fetch(DASH_API + '/api/dash/categories', {credentials:'include'}).then(function(r) { return r.json(); }),
+    fetch(DASH_API + '/api/dash/recent?limit=6', {credentials:'include'}).then(function(r) { return r.json(); }),
+  ])
+    .then(function(results) {
+      renderKpis(results[0]);
+      renderTrend(results[1]);
+      renderSeverity(results[2]);
+      renderCategories(results[3]);
+      renderRecent(results[4]);
+    })
+    .catch(function(e) {
+      console.error('Dashboard init error:', e);
+      showOffline();
+      setTimeout(init, 30000);
+    });
+}
+
+// ── Reveal animations ──
+(function() {
+  var io = new IntersectionObserver(function(es) {
+    es.forEach(function(e) { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+  }, {threshold: 0.08});
+  var els = document.querySelectorAll('.reveal');
+  for (var ei = 0; ei < els.length; ei++) io.observe(els[ei]);
+})();
+
+// ── Segmented / range toggles ──
+(function() {
+  document.querySelectorAll('.seg, .range').forEach(function(g) {
+    g.addEventListener('click', function(e) {
+      var b = e.target.closest('button'); if (!b) return;
+      var btns = g.querySelectorAll('button');
+      for (var i = 0; i < btns.length; i++) btns[i].classList.remove('on');
+      b.classList.add('on');
+    });
+  });
+})();
+
+// ── Code scan (local animation — NOT connected to a live scanner) ──
+(function() {
+  var scanBtn = document.getElementById('scanBtn');
+  if (!scanBtn) return;
+  scanBtn.addEventListener('click', function() {
+    var repo = document.getElementById('scanRepo').value;
+    var bar = document.getElementById('scanBar');
+    var log = document.getElementById('scanLog');
+    scanBtn.disabled = true;
+    bar.style.width = '0';
+    var steps = [
+      ['reading <span class="k">' + repo + '</span> \u00B7 main', 12],
+      ['mapping imports \u00B7 exports \u00B7 call sites', 34],
+      ['building code graph', 58],
+      ['scoring risk categories', 81],
       ['cross-referencing changed nodes', 94],
-      ['<span class="ok">scan complete · 12 findings (2 blocking)</span>', 100],
+      ['<span class="ok">scan complete \u00B7 local preview only</span>', 100],
     ];
-    scanLog.innerHTML=''; let i=0;
-    (function next(){
-      if(i>=steps.length){scanBtn.disabled=false; scanFind.textContent='12'; return;}
-      const [t,p]=steps[i++];
-      scanBar.style.width=p+'%';
-      const line=document.createElement('div'); line.innerHTML=(p<100?'<span class="dim">→</span> ':'')+t; scanLog.appendChild(line);
+    log.innerHTML = '// \u26A1 local preview \u2014 not connected to a live scanner\n';
+    var i = 0;
+    (function next() {
+      if (i >= steps.length) { scanBtn.disabled = false; document.getElementById('scanFind').textContent = '\u2014'; return; }
+      var t = steps[i][0], p = steps[i][1];
+      i++;
+      bar.style.width = p + '%';
+      var line = document.createElement('div');
+      line.innerHTML = (p < 100 ? '<span class="dim">\u2192</span> ' : '') + t;
+      log.appendChild(line);
       setTimeout(next, 520);
     })();
   });
+})();
 
-  // ── bot trainer (promptfoo) results render + mock eval ──
-  const pfBody=document.getElementById('pfBody');
-  function paint(cell,state){
-    if(state==='idle'){cell.innerHTML='<span class="pf-cell idle">· · ·</span>';}
-    else cell.innerHTML='<span class="pf-cell '+state+'">'+(state==='pass'?'PASS':'FAIL')+'</span>';
+// ── Bot trainer (local animation — NOT connected to promptfoo) ──
+(function() {
+  var pfBody = document.getElementById('pfBody');
+  if (!pfBody) return;
+  function paint(cell, state) {
+    if (state === 'idle') { cell.innerHTML = '<span class="pf-cell idle">\u00B7 \u00B7 \u00B7</span>'; }
+    else cell.innerHTML = '<span class="pf-cell ' + state + '">' + (state === 'pass' ? 'PASS' : 'FAIL') + '</span>';
   }
-  function tally(){
-    const cells=[...pfBody.querySelectorAll('td[data-r]')];
-    const pass=cells.filter(c=>c.dataset.r==='pass').length, tot=cells.length;
-    const pct=Math.round(pass/tot*100);
-    document.getElementById('pfRate').textContent=pct+'%';
-    document.getElementById('pfPassCount').textContent=pass+' / '+tot+' passed';
-    document.getElementById('pfMetricRate').textContent=pct+'%';
-    document.getElementById('pfRing').style.background='conic-gradient(var(--green) 0 '+pct+'%, rgba(255,255,255,0.08) '+pct+'% 100%)';
+  function tally() {
+    var cells = pfBody.querySelectorAll('td[data-r]');
+    var pass = 0;
+    for (var i = 0; i < cells.length; i++) { if (cells[i].dataset.r === 'pass') pass++; }
+    var tot = cells.length || 1;
+    var pct = Math.round(pass / tot * 100);
+    document.getElementById('pfRate').textContent = pct + '%';
+    document.getElementById('pfPassCount').textContent = pass + ' / ' + tot + ' passed';
+    document.getElementById('pfMetricRate').textContent = pct + '%';
+    document.getElementById('pfRing').style.background = 'conic-gradient(var(--green) 0 ' + pct + '%, rgba(255,255,255,0.08) ' + pct + '% 100%)';
   }
-  // initial populated state
-  pfBody.querySelectorAll('td[data-r]').forEach(c=>paint(c,c.dataset.r));
+  // Initial paint
+  pfBody.querySelectorAll('td[data-r]').forEach(function(c) { paint(c, c.dataset.r); });
   tally();
-  document.getElementById('evalBtn').addEventListener('click',()=>{
-    const btn=document.getElementById('evalBtn'); btn.disabled=true;
-    const cells=[...pfBody.querySelectorAll('td[data-r]')];
-    cells.forEach(c=>paint(c,'idle'));
-    cells.forEach((c,i)=>setTimeout(()=>{ paint(c,c.dataset.r); if(i===cells.length-1){tally(); btn.disabled=false;} }, 220+i*150));
+  document.getElementById('evalBtn').addEventListener('click', function() {
+    var btn = document.getElementById('evalBtn'); btn.disabled = true;
+    var cells = [].slice.call(pfBody.querySelectorAll('td[data-r]'));
+    cells.forEach(function(c) { paint(c, 'idle'); });
+    cells.forEach(function(c, i) {
+      setTimeout(function() {
+        paint(c, c.dataset.r);
+        if (i === cells.length - 1) { tally(); btn.disabled = false; }
+      }, 220 + i * 150);
+    });
   });
+})();
+
+// ── Boot ──
+document.addEventListener('DOMContentLoaded', init);
 </script>
 </body>
 </html>
