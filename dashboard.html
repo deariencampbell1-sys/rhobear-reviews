@@ -1,0 +1,595 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RHOBEAR Reviews — Scanner Dashboard</title>
+<meta name="description" content="Your code-review scanner, visualized: runs, bugs caught, run time, and time-to-verdict across every repo. Sign in with GitHub to load yours.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#070912; --bg-2:#0b1020; --bg-3:#0e1428; --panel:rgba(255,255,255,0.03);
+    --panel-hi:rgba(255,255,255,0.05);
+    --border:rgba(255,255,255,0.07); --border-hi:rgba(255,255,255,0.14);
+    --text:#e8ecf3; --text-2:#9aa3b8; --text-dim:#5e6883;
+    --gold:#ffb800; --gold-hi:#ffd255; --gold-glow:rgba(255,184,0,0.18);
+    --green:#4ade80; --red:#f87171; --blue:#60a5fa; --violet:#a78bfa;
+    --mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+    --sans:'Inter',-apple-system,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.5;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  a{color:inherit;text-decoration:none}
+  ::selection{background:var(--gold);color:#000}
+
+  /* background */
+  .bg-layer{position:fixed;inset:0;z-index:-2;pointer-events:none;overflow:hidden}
+  .grid-bg{position:absolute;inset:-100px;background-image:linear-gradient(rgba(255,255,255,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.02) 1px,transparent 1px);background-size:60px 60px;mask-image:radial-gradient(ellipse 90% 60% at 50% 0%, #000 30%, transparent 80%);-webkit-mask-image:radial-gradient(ellipse 90% 60% at 50% 0%, #000 30%, transparent 80%)}
+  .glow-orb{position:absolute;border-radius:50%;filter:blur(90px);opacity:0.4}
+  .orb-1{width:520px;height:520px;background:radial-gradient(circle,rgba(255,184,0,0.28),transparent 70%);top:-140px;right:-80px}
+  .orb-2{width:420px;height:420px;background:radial-gradient(circle,rgba(96,165,250,0.18),transparent 70%);top:50vh;left:-120px}
+
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.45}}
+  @keyframes blink{0%,50%{opacity:1}51%,100%{opacity:0}}
+  @keyframes growBar{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+  .reveal{opacity:0;transform:translateY(18px);transition:opacity .7s cubic-bezier(.16,1,.3,1),transform .7s cubic-bezier(.16,1,.3,1)}
+  .reveal.in{opacity:1;transform:none}
+  @media (prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}.bar i{animation:none!important}}
+
+  /* ── top bar ── */
+  .dtop{position:sticky;top:0;z-index:50;background:rgba(7,9,18,0.78);backdrop-filter:blur(16px);border-bottom:1px solid var(--border)}
+  .dtop-in{max-width:1480px;margin:0 auto;padding:12px 22px;display:flex;align-items:center;gap:18px}
+  .brand{display:flex;align-items:center;gap:11px;font-weight:600;font-size:14.5px}
+  .brand-mark{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;background:linear-gradient(135deg,rgba(255,184,0,0.18),rgba(255,184,0,0.04));border:1px solid rgba(255,184,0,0.3);box-shadow:0 4px 16px rgba(255,184,0,0.16)}
+  .brand-mark svg{width:24px;height:24px}
+  .brand b{font-weight:700}.brand span{color:var(--text-2);font-weight:400}
+  .repo-pick{margin-left:10px;display:inline-flex;align-items:center;gap:9px;font-family:var(--mono);font-size:12px;color:var(--text-2);padding:7px 13px;border:1px solid var(--border);border-radius:9px;background:var(--panel);cursor:pointer;transition:.15s}
+  .repo-pick:hover{border-color:var(--border-hi);color:var(--text)}
+  .repo-pick .dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green)}
+  .repo-pick .chev{color:var(--text-dim)}
+  .dtop-right{margin-left:auto;display:flex;align-items:center;gap:12px}
+  .demo-badge{font-family:var(--mono);font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);padding:5px 11px;border:1px solid rgba(255,184,0,0.28);border-radius:99px;background:var(--gold-glow)}
+  .gh-btn{display:inline-flex;align-items:center;gap:9px;font-weight:600;font-size:13.5px;padding:10px 17px;border-radius:10px;background:#1f2328;color:#fff;border:1px solid #30363d;transition:.18s}
+  .gh-btn:hover{background:#2a2f36;border-color:#444c56;transform:translateY(-1px);box-shadow:0 8px 22px -8px rgba(0,0,0,0.6)}
+  .gh-btn svg{width:18px;height:18px;fill:currentColor}
+
+  /* ── layout ── */
+  .layout{max-width:1480px;margin:0 auto;display:grid;grid-template-columns:230px 1fr;gap:0;min-height:calc(100vh - 57px)}
+  .side{border-right:1px solid var(--border);padding:24px 16px;display:flex;flex-direction:column;gap:4px}
+  .side-grp{font-family:var(--mono);font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-dim);margin:18px 12px 8px}
+  .side-grp:first-child{margin-top:0}
+  .side a{display:flex;align-items:center;gap:11px;padding:9px 12px;border-radius:9px;color:var(--text-2);font-size:13.5px;font-weight:500;transition:.15s}
+  .side a svg{width:17px;height:17px;flex-shrink:0}
+  .side a:hover{background:var(--panel);color:var(--text)}
+  .side a.active{background:linear-gradient(90deg,rgba(255,184,0,0.12),rgba(255,184,0,0.02));color:var(--gold);border:1px solid rgba(255,184,0,0.2)}
+  .side-foot{margin-top:auto;padding:14px 12px;font-family:var(--mono);font-size:11px;color:var(--text-dim);line-height:1.6;border-top:1px solid var(--border)}
+  .side-foot b{color:var(--text-2);font-weight:500}
+
+  .main{padding:26px 30px 60px;min-width:0}
+  .main-head{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:22px}
+  .main-head h1{font-size:24px;font-weight:700;letter-spacing:-0.02em}
+  .main-head .sub{font-size:13.5px;color:var(--text-2);margin-top:4px}
+  .range{display:inline-flex;border:1px solid var(--border);border-radius:9px;overflow:hidden;font-family:var(--mono);font-size:12px}
+  .range button{padding:8px 14px;background:transparent;color:var(--text-2);border:none;border-right:1px solid var(--border);cursor:pointer;transition:.15s;font-family:inherit}
+  .range button:last-child{border-right:none}
+  .range button:hover{color:var(--text);background:var(--panel)}
+  .range button.on{background:var(--gold-glow);color:var(--gold)}
+
+  /* ── KPI tiles ── */
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:18px}
+  .kpi{background:linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.012));border:1px solid var(--border);border-radius:15px;padding:20px 20px 16px;position:relative;overflow:hidden;transition:.25s}
+  .kpi:hover{border-color:var(--border-hi);transform:translateY(-3px)}
+  .kpi-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+  .kpi-ic{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;background:linear-gradient(135deg,rgba(255,184,0,0.16),rgba(255,184,0,0.04));border:1px solid rgba(255,184,0,0.24);color:var(--gold)}
+  .kpi-ic svg{width:19px;height:19px}
+  .kpi-ic.red{background:linear-gradient(135deg,rgba(248,113,113,0.16),rgba(248,113,113,0.04));border-color:rgba(248,113,113,0.24);color:var(--red)}
+  .kpi-ic.blue{background:linear-gradient(135deg,rgba(96,165,250,0.16),rgba(96,165,250,0.04));border-color:rgba(96,165,250,0.24);color:var(--blue)}
+  .kpi-ic.green{background:linear-gradient(135deg,rgba(74,222,128,0.16),rgba(74,222,128,0.04));border-color:rgba(74,222,128,0.24);color:var(--green)}
+  .kpi-delta{font-family:var(--mono);font-size:11px;font-weight:600;padding:3px 8px;border-radius:6px}
+  .kpi-delta.up{color:var(--green);background:rgba(74,222,128,0.1)}
+  .kpi-delta.down{color:var(--green);background:rgba(74,222,128,0.1)}
+  .kpi-delta.bad{color:var(--red);background:rgba(248,113,113,0.1)}
+  .kpi-v{font-family:var(--mono);font-size:32px;font-weight:600;letter-spacing:-0.02em;line-height:1}
+  .kpi-l{font-size:12.5px;color:var(--text-2);margin-top:7px}
+  .kpi-spark{display:flex;align-items:flex-end;gap:2px;height:26px;margin-top:14px}
+  .kpi-spark i{flex:1;background:linear-gradient(180deg,var(--gold),rgba(255,184,0,0.25));border-radius:2px 2px 0 0;opacity:0.55;transform-origin:bottom;animation:growBar .9s cubic-bezier(.16,1,.3,1) both}
+  .kpi-spark.red i{background:linear-gradient(180deg,var(--red),rgba(248,113,113,0.25))}
+  .kpi-spark.blue i{background:linear-gradient(180deg,var(--blue),rgba(96,165,250,0.25))}
+  .kpi-spark.green i{background:linear-gradient(180deg,var(--green),rgba(74,222,128,0.25))}
+
+  /* ── grid cards ── */
+  .grid2{display:grid;grid-template-columns:1.55fr 1fr;gap:16px;margin-bottom:18px}
+  .grid2b{display:grid;grid-template-columns:1.55fr 1fr;gap:16px}
+  .card{background:linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.008));border:1px solid var(--border);border-radius:15px;padding:22px;min-width:0}
+  .card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+  .card-head h3{font-size:15px;font-weight:600}
+  .card-head .meta{font-family:var(--mono);font-size:11px;color:var(--text-dim)}
+  .card-head .live{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;color:var(--green)}
+  .card-head .live .d{width:5px;height:5px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse 2s ease-in-out infinite}
+
+  /* trend bar chart */
+  .chart{height:200px;display:flex;align-items:flex-end;gap:7px;padding-top:10px}
+  .bar{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:6px;height:100%;position:relative}
+  .bar i{width:100%;max-width:26px;background:linear-gradient(180deg,var(--gold) 0%,rgba(255,184,0,0.22) 100%);border-radius:4px 4px 0 0;transform-origin:bottom;animation:growBar 1s cubic-bezier(.16,1,.3,1) both;position:relative}
+  .bar i .bugs{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(180deg,rgba(248,113,113,0.85),rgba(248,113,113,0.4));border-radius:0 0 4px 4px}
+  .bar:hover i{filter:brightness(1.15)}
+  .bar span{font-family:var(--mono);font-size:9.5px;color:var(--text-dim)}
+  .bar .tip{position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#11151f;border:1px solid var(--border-hi);border-radius:7px;padding:6px 9px;font-family:var(--mono);font-size:10.5px;white-space:nowrap;opacity:0;pointer-events:none;transition:.15s;z-index:5}
+  .bar:hover .tip{opacity:1}
+  .tip b{color:var(--gold)}.tip .r{color:var(--red)}
+  .legend{display:flex;gap:18px;margin-top:14px;font-family:var(--mono);font-size:11px;color:var(--text-2)}
+  .legend span{display:inline-flex;align-items:center;gap:7px}
+  .legend i{width:10px;height:10px;border-radius:3px}
+  .legend i.g{background:var(--gold)}.legend i.r{background:var(--red)}
+
+  /* donut */
+  .donut-wrap{display:flex;align-items:center;gap:24px}
+  .donut{width:148px;height:148px;border-radius:50%;flex-shrink:0;position:relative;
+    background:conic-gradient(var(--red) 0 22%, var(--gold) 22% 54%, var(--blue) 54% 100%)}
+  .donut::after{content:'';position:absolute;inset:20px;border-radius:50%;background:var(--bg-2);border:1px solid var(--border)}
+  .donut-c{position:absolute;inset:0;display:grid;place-content:center;text-align:center;z-index:1}
+  .donut-c b{font-family:var(--mono);font-size:26px;font-weight:600;line-height:1}
+  .donut-c small{font-size:10px;color:var(--text-2);font-family:var(--mono);letter-spacing:0.08em}
+  .sev-list{flex:1;display:flex;flex-direction:column;gap:13px}
+  .sev{display:flex;align-items:center;gap:11px;font-size:13px}
+  .sev .sw{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+  .sev .sw.h{background:var(--red)}.sev .sw.m{background:var(--gold)}.sev .sw.l{background:var(--blue)}
+  .sev .nm{color:var(--text-2)}
+  .sev .n{margin-left:auto;font-family:var(--mono);font-weight:600;color:var(--text)}
+
+  /* category bars */
+  .cat{display:flex;flex-direction:column;gap:14px}
+  .cat-row .cl{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:6px}
+  .cat-row .cl .nm{color:var(--text-2)}
+  .cat-row .cl .n{font-family:var(--mono);color:var(--text);font-weight:600}
+  .cat-track{height:8px;border-radius:99px;background:var(--panel);overflow:hidden}
+  .cat-track i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--gold),var(--gold-hi));transform-origin:left;animation:growBar .9s cubic-bezier(.16,1,.3,1) both}
+
+  /* runs table */
+  .runs{width:100%;border-collapse:collapse;font-size:13px}
+  .runs th{text-align:left;font-family:var(--mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);font-weight:500;padding:0 14px 12px;border-bottom:1px solid var(--border)}
+  .runs td{padding:13px 14px;border-bottom:1px solid var(--border);color:var(--text)}
+  .runs tr:last-child td{border-bottom:none}
+  .runs tbody tr{transition:background .15s}
+  .runs tbody tr:hover{background:rgba(255,255,255,0.018)}
+  .runs .pr{font-family:var(--mono);color:var(--gold)}
+  .runs .repo{color:var(--text-2);font-family:var(--mono);font-size:12px}
+  .runs .dur{font-family:var(--mono);color:var(--text-2);font-size:12px}
+  .runs .find{font-family:var(--mono);font-weight:600}
+  .verdict{font-family:var(--mono);font-size:10.5px;font-weight:600;padding:4px 9px;border-radius:6px;letter-spacing:0.03em;white-space:nowrap}
+  .verdict.acc{color:var(--green);background:rgba(74,222,128,0.1);border:1px solid rgba(74,222,128,0.22)}
+  .verdict.chg{color:var(--red);background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.22)}
+  .verdict.com{color:var(--blue);background:rgba(96,165,250,0.1);border:1px solid rgba(96,165,250,0.22)}
+
+  /* sign-in overlay strip */
+  .signin-strip{margin-top:22px;display:flex;align-items:center;gap:18px;flex-wrap:wrap;padding:20px 24px;border:1px solid rgba(255,184,0,0.2);border-radius:15px;background:linear-gradient(100deg,rgba(255,184,0,0.08),rgba(255,184,0,0.015))}
+  .signin-strip .t{flex:1;min-width:240px}
+  .signin-strip h4{font-size:15px;font-weight:600;margin-bottom:4px}
+  .signin-strip p{font-size:13px;color:var(--text-2);line-height:1.5}
+
+  /* ── form controls (shared) ── */
+  .field{display:flex;flex-direction:column;gap:7px;min-width:0}
+  .field label{font-family:var(--mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim)}
+  .inp,.sel{font-family:var(--mono);font-size:13px;color:var(--text);background:var(--bg-2);border:1px solid var(--border);border-radius:9px;padding:10px 12px;transition:.15s;width:100%}
+  .inp:focus,.sel:focus{outline:none;border-color:rgba(255,184,0,0.5);box-shadow:0 0 0 3px var(--gold-glow)}
+  .sel{appearance:none;cursor:pointer;background-image:linear-gradient(45deg,transparent 50%,var(--text-dim) 50%),linear-gradient(135deg,var(--text-dim) 50%,transparent 50%);background-position:calc(100% - 16px) 17px,calc(100% - 11px) 17px;background-size:5px 5px,5px 5px;background-repeat:no-repeat}
+  .seg{display:inline-flex;border:1px solid var(--border);border-radius:9px;overflow:hidden;font-family:var(--mono);font-size:12px}
+  .seg button{padding:10px 14px;background:transparent;color:var(--text-2);border:none;border-right:1px solid var(--border);cursor:pointer;font-family:inherit;transition:.15s}
+  .seg button:last-child{border-right:none}
+  .seg button:hover{color:var(--text);background:var(--panel)}
+  .seg button.on{background:var(--gold-glow);color:var(--gold)}
+  .run-btn{display:inline-flex;align-items:center;gap:9px;font-weight:600;font-size:13.5px;padding:11px 20px;border-radius:10px;background:var(--gold);color:#1a1206;border:1px solid var(--gold);cursor:pointer;font-family:var(--sans);transition:.18s;white-space:nowrap}
+  .run-btn:hover{background:var(--gold-hi);transform:translateY(-1px);box-shadow:0 10px 26px -10px rgba(255,184,0,0.5)}
+  .run-btn:disabled{opacity:0.55;cursor:default;transform:none;box-shadow:none}
+  .run-btn svg{width:16px;height:16px}
+  .ghost-btn{background:transparent;color:var(--text);border:1px solid var(--border-hi);border-radius:10px;padding:11px 18px;font-size:13.5px;font-weight:500;cursor:pointer;font-family:var(--sans);transition:.15s}
+  .ghost-btn:hover{background:var(--panel);border-color:var(--text-2)}
+
+  /* ── code-graph scan card ── */
+  .scan-form{display:grid;grid-template-columns:1.3fr 1fr auto auto;gap:14px;align-items:end}
+  .scan-status{margin-top:18px;border-top:1px solid var(--border);padding-top:16px}
+  .scan-bar{height:7px;border-radius:99px;background:var(--panel);overflow:hidden;margin-bottom:12px}
+  .scan-bar i{display:block;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,var(--gold),var(--gold-hi));transition:width .35s ease}
+  .scan-log{font-family:var(--mono);font-size:11.5px;line-height:1.85;color:var(--text-2);min-height:88px}
+  .scan-log .k{color:var(--gold)}.scan-log .ok{color:var(--green)}.scan-log .dim{color:var(--text-dim)}
+  .scan-meta{display:flex;gap:22px;flex-wrap:wrap;font-family:var(--mono);font-size:11.5px;color:var(--text-dim);margin-top:10px}
+  .scan-meta b{color:var(--text);font-weight:600}
+
+  /* ── bot trainer (promptfoo) ── */
+  .pf{display:grid;grid-template-columns:1fr 1.15fr;gap:24px;align-items:start}
+  .pf-col h5{font-family:var(--mono);font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-dim);margin:0 0 11px}
+  .pf-block{margin-bottom:20px}
+  .pchips{display:flex;flex-wrap:wrap;gap:8px}
+  .pchip{font-family:var(--mono);font-size:11.5px;color:var(--text);background:var(--bg-2);border:1px solid var(--border);border-radius:8px;padding:7px 11px;display:inline-flex;align-items:center;gap:7px}
+  .pchip .m{color:var(--gold)}
+  .pchip.add{color:var(--text-dim);border-style:dashed;cursor:pointer}
+  .pf-prompt{font-family:var(--mono);font-size:12px;line-height:1.6;color:var(--text-2);background:var(--bg-2);border:1px solid var(--border);border-radius:10px;padding:12px 14px}
+  .pf-prompt .var{color:var(--gold)}
+  .pf-tests{display:flex;flex-direction:column;gap:9px}
+  .pf-test{display:flex;align-items:center;gap:10px;background:var(--bg-2);border:1px solid var(--border);border-radius:9px;padding:10px 12px;font-size:12.5px}
+  .pf-test .nm{color:var(--text);flex:1;min-width:0}
+  .apill{font-family:var(--mono);font-size:10px;padding:3px 8px;border-radius:6px;background:rgba(167,139,250,0.12);color:var(--violet);border:1px solid rgba(167,139,250,0.25);white-space:nowrap}
+  .apill.rub{background:rgba(96,165,250,0.12);color:var(--blue);border-color:rgba(96,165,250,0.25)}
+  .apill.lat{background:rgba(74,222,128,0.1);color:var(--green);border-color:rgba(74,222,128,0.22)}
+  .pf-runrow{display:flex;align-items:center;gap:14px;margin-top:6px}
+  .pf-yaml{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--text-dim)}
+  /* results */
+  .pf-res-head{display:flex;align-items:center;gap:16px;margin-bottom:14px}
+  .ring{width:64px;height:64px;border-radius:50%;flex-shrink:0;position:relative;background:conic-gradient(var(--green) 0 84%, rgba(255,255,255,0.08) 84% 100%)}
+  .ring::after{content:'';position:absolute;inset:7px;border-radius:50%;background:var(--bg-2)}
+  .ring b{position:absolute;inset:0;display:grid;place-content:center;font-family:var(--mono);font-size:15px;font-weight:600;color:var(--green);z-index:1}
+  .pf-res-head .t b{display:block;font-size:14px;color:var(--text);font-weight:600}
+  .pf-res-head .t span{font-size:12px;color:var(--text-2)}
+  .pfm{width:100%;border-collapse:collapse;font-size:12px}
+  .pfm th{font-family:var(--mono);font-size:9.5px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-dim);font-weight:500;padding:0 10px 9px;text-align:center}
+  .pfm th.tcase{text-align:left}
+  .pfm td{padding:9px 10px;border-top:1px solid var(--border);text-align:center}
+  .pfm td.tcase{text-align:left;color:var(--text-2)}
+  .pf-cell{font-family:var(--mono);font-size:10px;font-weight:600;padding:4px 8px;border-radius:6px;display:inline-block;min-width:54px}
+  .pf-cell.pass{color:var(--green);background:rgba(74,222,128,0.1);border:1px solid rgba(74,222,128,0.22)}
+  .pf-cell.fail{color:var(--red);background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.22)}
+  .pf-cell.idle{color:var(--text-dim);background:var(--panel);border:1px solid var(--border)}
+  .pf-metrics{display:flex;gap:22px;flex-wrap:wrap;margin-top:16px;font-family:var(--mono);font-size:11.5px;color:var(--text-dim)}
+  .pf-metrics b{color:var(--text);font-weight:600}
+
+  @media (max-width:980px){.scan-form{grid-template-columns:1fr 1fr}.pf{grid-template-columns:1fr}}
+
+  @media (max-width:1100px){
+    .layout{grid-template-columns:1fr}
+    .side{flex-direction:row;flex-wrap:wrap;border-right:none;border-bottom:1px solid var(--border);padding:14px;gap:6px;align-items:center}
+    .side-grp{display:none}.side-foot{display:none}
+    .grid2,.grid2b{grid-template-columns:1fr}
+  }
+  @media (max-width:720px){
+    .kpis{grid-template-columns:repeat(2,1fr)}
+    .main{padding:20px 16px 50px}
+    .donut-wrap{flex-direction:column;align-items:flex-start}
+    .runs .repo,.runs th.h-repo,.runs td.h-repo{display:none}
+    .repo-pick{display:none}
+  }
+</style>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <linearGradient id="rb-grad" x1="50%" y1="0%" x2="50%" y2="100%"><stop offset="0%" stop-color="#ffd255"/><stop offset="100%" stop-color="#d99500"/></linearGradient>
+  <symbol id="rb-mark" viewBox="0 0 36 36">
+    <circle cx="10" cy="11" r="4.8" fill="url(#rb-grad)"/><circle cx="26" cy="11" r="4.8" fill="url(#rb-grad)"/>
+    <circle cx="18" cy="20" r="11.5" fill="url(#rb-grad)"/><ellipse cx="18" cy="23.5" rx="5.2" ry="4" fill="#3a2200" opacity="0.32"/>
+    <circle cx="13" cy="18" r="1.5" fill="#1a0e00"/><circle cx="23" cy="18" r="1.5" fill="#1a0e00"/><ellipse cx="18" cy="22" rx="1.9" ry="1.4" fill="#1a0e00"/>
+  </symbol>
+</defs></svg>
+</head>
+<body>
+
+<div class="bg-layer"><div class="grid-bg"></div><div class="glow-orb orb-1"></div><div class="glow-orb orb-2"></div></div>
+
+<header class="dtop">
+  <div class="dtop-in">
+    <a href="index.html" class="brand"><span class="brand-mark"><svg><use href="#rb-mark"/></svg></span><span><b>RHOBEAR</b> <span>Reviews</span></span></a>
+    <button class="repo-pick"><span class="dot"></span> acme-co/payments-api <span class="chev">▾</span></button>
+    <div class="dtop-right">
+      <span class="demo-badge">Demo data</span>
+      <a href="https://github.com/apps/rhobear-reviews/installations/new" class="gh-btn">
+        <svg viewBox="0 0 24 24"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.4 3-.405 1.02.005 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+        Sign in with GitHub
+      </a>
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+  <!-- sidebar -->
+  <aside class="side">
+    <div class="side-grp">Scanner</div>
+    <a class="active" href="#top"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg> Overview</a>
+    <a href="#scan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg> Code scan</a>
+    <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg> Findings</a>
+    <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-7L9 4H5a2 2 0 0 0-2 2z"/></svg> Repos</a>
+    <div class="side-grp">Bots</div>
+    <a href="#trainer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="8" width="16" height="11" rx="2"/><path d="M12 8V4M9 13h.01M15 13h.01M2 13h2M20 13h2"/></svg> Bot trainer</a>
+    <div class="side-grp">Account</div>
+    <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg> Usage</a>
+    <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> Settings</a>
+    <div class="side-foot">Plan · <b>Pro + Codebase</b><br>Reviews this cycle · <b>62 / 100</b><br>Resets in <b>11 days</b></div>
+  </aside>
+
+  <!-- main -->
+  <main class="main">
+    <div class="main-head">
+      <div>
+        <h1>Overview</h1>
+        <div class="sub">Your scanner across <b style="color:var(--text)">8 repos</b> · last 30 days</div>
+      </div>
+      <div class="range">
+        <button>7d</button><button class="on">30d</button><button>90d</button><button>All</button>
+      </div>
+    </div>
+
+    <!-- KPI tiles — the four you asked for -->
+    <div class="kpis">
+      <div class="kpi reveal">
+        <div class="kpi-top">
+          <span class="kpi-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+          <span class="kpi-delta up">▲ 18%</span>
+        </div>
+        <div class="kpi-v" data-count="1284">1,284</div>
+        <div class="kpi-l">Reviews run</div>
+        <div class="kpi-spark" data-spark="6,9,7,11,8,13,10,14,12,16,13,18"></div>
+      </div>
+      <div class="kpi reveal">
+        <div class="kpi-top">
+          <span class="kpi-ic red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg></span>
+          <span class="kpi-delta bad">▲ 6%</span>
+        </div>
+        <div class="kpi-v" data-count="3947">3,947</div>
+        <div class="kpi-l">Bugs caught</div>
+        <div class="kpi-spark red" data-spark="14,11,16,12,18,15,20,17,22,19,24,21"></div>
+      </div>
+      <div class="kpi reveal">
+        <div class="kpi-top">
+          <span class="kpi-ic blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+          <span class="kpi-delta down">▼ 9%</span>
+        </div>
+        <div class="kpi-v">1m 38s</div>
+        <div class="kpi-l">Median run time</div>
+        <div class="kpi-spark blue" data-spark="18,16,17,14,15,13,14,12,13,11,12,10"></div>
+      </div>
+      <div class="kpi reveal">
+        <div class="kpi-top">
+          <span class="kpi-ic green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg></span>
+          <span class="kpi-delta down">▼ 12%</span>
+        </div>
+        <div class="kpi-v">1m 12s</div>
+        <div class="kpi-l">Avg time to verdict</div>
+        <div class="kpi-spark green" data-spark="20,18,19,16,17,15,14,13,12,11,10,9"></div>
+      </div>
+    </div>
+
+    <!-- trend + severity -->
+    <div class="grid2">
+      <div class="card reveal">
+        <div class="card-head">
+          <h3>Reviews &amp; bugs · last 14 days</h3>
+          <span class="live"><span class="d"></span> live</span>
+        </div>
+        <div class="chart" id="trend"></div>
+        <div class="legend"><span><i class="g"></i> Reviews run</span><span><i class="r"></i> Bugs caught</span></div>
+      </div>
+      <div class="card reveal">
+        <div class="card-head"><h3>Findings by severity</h3><span class="meta">3,947 total</span></div>
+        <div class="donut-wrap">
+          <div class="donut"><div class="donut-c"><b>868</b><small>BLOCKING</small></div></div>
+          <div class="sev-list">
+            <div class="sev"><span class="sw h"></span><span class="nm">High · blocking</span><span class="n">868</span></div>
+            <div class="sev"><span class="sw m"></span><span class="nm">Medium</span><span class="n">1,263</span></div>
+            <div class="sev"><span class="sw l"></span><span class="nm">Low · advisory</span><span class="n">1,816</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- recent runs + categories -->
+    <div class="grid2b">
+      <div class="card reveal">
+        <div class="card-head"><h3>Recent runs</h3><span class="meta">auto-refreshing</span></div>
+        <table class="runs">
+          <thead><tr><th>PR</th><th class="h-repo">Repo</th><th>Files</th><th>Findings</th><th>Verdict</th><th>Time</th></tr></thead>
+          <tbody>
+            <tr><td class="pr">#1421</td><td class="repo h-repo">payments-api</td><td>87</td><td class="find" style="color:var(--red)">2 blocking</td><td><span class="verdict chg">REQUEST_CHANGES</span></td><td class="dur">1m 29s</td></tr>
+            <tr><td class="pr">#1420</td><td class="repo h-repo">web-app</td><td>14</td><td class="find" style="color:var(--green)">clean</td><td><span class="verdict acc">ACCEPT</span></td><td class="dur">52s</td></tr>
+            <tr><td class="pr">#1419</td><td class="repo h-repo">billing-svc</td><td>33</td><td class="find" style="color:var(--gold)">4 medium</td><td><span class="verdict com">COMMENT</span></td><td class="dur">1m 47s</td></tr>
+            <tr><td class="pr">#1418</td><td class="repo h-repo">payments-api</td><td>9</td><td class="find" style="color:var(--red)">1 blocking</td><td><span class="verdict chg">REQUEST_CHANGES</span></td><td class="dur">41s</td></tr>
+            <tr><td class="pr">#1417</td><td class="repo h-repo">infra</td><td>21</td><td class="find" style="color:var(--green)">clean</td><td><span class="verdict acc">ACCEPT</span></td><td class="dur">1m 03s</td></tr>
+            <tr><td class="pr">#1416</td><td class="repo h-repo">web-app</td><td>62</td><td class="find" style="color:var(--gold)">7 medium</td><td><span class="verdict com">COMMENT</span></td><td class="dur">2m 11s</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card reveal">
+        <div class="card-head"><h3>What we caught</h3><span class="meta">by category</span></div>
+        <div class="cat">
+          <div class="cat-row"><div class="cl"><span class="nm">Security &amp; auth</span><span class="n">1,104</span></div><div class="cat-track"><i style="width:92%"></i></div></div>
+          <div class="cat-row"><div class="cl"><span class="nm">Correctness bugs</span><span class="n">958</span></div><div class="cat-track"><i style="width:80%"></i></div></div>
+          <div class="cat-row"><div class="cl"><span class="nm">Missing tests</span><span class="n">612</span></div><div class="cat-track"><i style="width:51%"></i></div></div>
+          <div class="cat-row"><div class="cl"><span class="nm">Broken contracts</span><span class="n">487</span></div><div class="cat-track"><i style="width:41%"></i></div></div>
+          <div class="cat-row"><div class="cl"><span class="nm">Performance</span><span class="n">419</span></div><div class="cat-track"><i style="width:35%"></i></div></div>
+          <div class="cat-row"><div class="cl"><span class="nm">Error handling</span><span class="n">367</span></div><div class="cat-track"><i style="width:31%"></i></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── code graph scanner ── -->
+    <div class="card reveal" id="scan" style="margin-bottom:18px;scroll-margin-top:80px">
+      <div class="card-head">
+        <h3>Code graph scanner</h3>
+        <span class="meta">map the repo · scan on demand</span>
+      </div>
+      <div class="scan-form">
+        <div class="field">
+          <label>Repository</label>
+          <select class="sel" id="scanRepo"><option>acme-co/payments-api</option><option>acme-co/web-app</option><option>acme-co/billing-svc</option><option>acme-co/infra</option></select>
+        </div>
+        <div class="field">
+          <label>Branch</label>
+          <select class="sel"><option>main</option><option>develop</option><option>release/2.4</option></select>
+        </div>
+        <div class="field">
+          <label>Scope</label>
+          <div class="seg" id="scanScope"><button class="on">Full repo</button><button>Changed</button><button>Path…</button></div>
+        </div>
+        <button class="run-btn" id="scanBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Run scan
+        </button>
+      </div>
+      <div class="scan-status">
+        <div class="scan-bar"><i id="scanBar"></i></div>
+        <div class="scan-log" id="scanLog"><span class="dim"># idle — last scan 2h ago. Press “Run scan” to map the graph and score risk.</span></div>
+        <div class="scan-meta"><span>Files mapped <b>341</b></span><span>Functions <b>12,407</b></span><span>Findings <b id="scanFind">12</b></span><span>Graph age <b>2h</b></span></div>
+      </div>
+    </div>
+
+    <!-- ── bot trainer · promptfoo ── -->
+    <div class="card reveal" id="trainer" style="margin-bottom:18px;scroll-margin-top:80px">
+      <div class="card-head">
+        <h3>Bot trainer · <span style="color:var(--gold)">promptfoo</span>-compatible</h3>
+        <span class="meta">eval your bots from here</span>
+      </div>
+      <div class="pf">
+        <!-- config -->
+        <div class="pf-col">
+          <div class="pf-block">
+            <h5>Providers · your bots</h5>
+            <div class="pchips">
+              <span class="pchip">support-bot · <span class="m">arcturus</span></span>
+              <span class="pchip">support-bot · <span class="m">ursa</span></span>
+              <span class="pchip add">+ add bot</span>
+            </div>
+          </div>
+          <div class="pf-block">
+            <h5>Prompt</h5>
+            <div class="pf-prompt">You are the Acme support agent. Answer using <span class="var">{{policy}}</span>. Be brief, correct, and on-brand. Question: <span class="var">{{question}}</span></div>
+          </div>
+          <div class="pf-block">
+            <h5>Tests · assertions</h5>
+            <div class="pf-tests" id="pfTests">
+              <div class="pf-test"><span class="nm">Refund window stated</span><span class="apill">contains "30 days"</span></div>
+              <div class="pf-test"><span class="nm">Stays polite &amp; on-brand</span><span class="apill rub">llm-rubric</span></div>
+              <div class="pf-test"><span class="nm">No hallucinated price</span><span class="apill rub">llm-rubric</span></div>
+              <div class="pf-test"><span class="nm">Handles PayPal dispute</span><span class="apill">contains "dispute"</span></div>
+              <div class="pf-test"><span class="nm">Answers under 2s</span><span class="apill lat">latency &lt; 2000ms</span></div>
+            </div>
+          </div>
+          <div class="pf-runrow">
+            <button class="run-btn" id="evalBtn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>
+              Run eval
+            </button>
+            <span class="pf-yaml">mirrors your <b style="color:var(--text-2)">promptfooconfig.yaml</b></span>
+          </div>
+        </div>
+        <!-- results -->
+        <div class="pf-col">
+          <h5>Results</h5>
+          <div class="pf-res-head">
+            <div class="ring" id="pfRing"><b id="pfRate">80%</b></div>
+            <div class="t"><b id="pfPassCount">8 / 10 passed</b><span>2 providers × 5 tests · last run just now</span></div>
+          </div>
+          <table class="pfm">
+            <thead><tr><th class="tcase">Test case</th><th>Arcturus</th><th>Ursa</th></tr></thead>
+            <tbody id="pfBody">
+              <tr><td class="tcase">Refund window stated</td><td data-r="pass"></td><td data-r="pass"></td></tr>
+              <tr><td class="tcase">Stays polite &amp; on-brand</td><td data-r="pass"></td><td data-r="pass"></td></tr>
+              <tr><td class="tcase">No hallucinated price</td><td data-r="fail"></td><td data-r="pass"></td></tr>
+              <tr><td class="tcase">Handles PayPal dispute</td><td data-r="pass"></td><td data-r="pass"></td></tr>
+              <tr><td class="tcase">Answers under 2s</td><td data-r="pass"></td><td data-r="fail"></td></tr>
+            </tbody>
+          </table>
+          <div class="pf-metrics"><span>Pass rate <b id="pfMetricRate">80%</b></span><span>Avg latency <b>1.4s</b></span><span>Avg score <b>0.91</b></span><span>Model <b>Arcturus · Ursa</b></span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="signin-strip reveal">
+      <div class="t">
+        <h4>This is a demo of what your dashboard looks like.</h4>
+        <p>Sign in with GitHub to load your repos, your runs, and your real numbers — free, no card.</p>
+      </div>
+      <a href="https://github.com/apps/rhobear-reviews/installations/new" class="gh-btn">
+        <svg viewBox="0 0 24 24"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.4 3-.405 1.02.005 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+        Sign in with GitHub
+      </a>
+    </div>
+  </main>
+</div>
+
+<script>
+  // reveal
+  const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}}),{threshold:0.08});
+  document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+  // sparklines in KPI tiles
+  document.querySelectorAll('.kpi-spark').forEach(el=>{
+    const vals=el.dataset.spark.split(',').map(Number); const max=Math.max(...vals);
+    el.innerHTML=vals.map((v,i)=>`<i style="height:${Math.round(v/max*100)}%;animation-delay:${i*0.04}s"></i>`).join('');
+  });
+
+  // trend bar chart (reviews + bugs overlay), 14 days
+  const reviews=[58,64,52,71,66,80,74,69,88,79,93,84,97,102];
+  const bugs   =[12,15,11,18,16,22,19,17,24,21,27,23,28,31];
+  const maxR=Math.max(...reviews);
+  const days=['','','','','','','','','','','','','y’day','today'];
+  document.getElementById('trend').innerHTML=reviews.map((r,i)=>{
+    const h=Math.round(r/maxR*100); const bh=Math.round(bugs[i]/r*100);
+    return `<div class="bar"><div class="tip"><b>${r}</b> reviews · <span class="r">${bugs[i]}</span> bugs</div>`+
+           `<i style="height:${h}%;animation-delay:${i*0.05}s"><span class="bugs" style="height:${bh}%"></span></i>`+
+           `<span>${days[i]||'·'}</span></div>`;
+  }).join('');
+
+  // count-up on the two big integer KPIs
+  function countUp(el){
+    const target=+el.dataset.count; const t0=performance.now(); const dur=1100;
+    function tick(now){const p=Math.min((now-t0)/dur,1); const e=1-Math.pow(1-p,3);
+      el.textContent=Math.round(target*e).toLocaleString(); if(p<1)requestAnimationFrame(tick);}
+    requestAnimationFrame(tick);
+  }
+  const cio=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){countUp(e.target);cio.unobserve(e.target);}}),{threshold:0.5});
+  document.querySelectorAll('.kpi-v[data-count]').forEach(el=>cio.observe(el));
+
+  // ── segmented / range toggles ──
+  document.querySelectorAll('.seg, .range').forEach(g=>g.addEventListener('click',e=>{
+    const b=e.target.closest('button'); if(!b)return;
+    g.querySelectorAll('button').forEach(x=>x.classList.remove('on')); b.classList.add('on');
+  }));
+
+  // ── code graph scan (mock run) ──
+  const scanBtn=document.getElementById('scanBtn'), scanBar=document.getElementById('scanBar'),
+        scanLog=document.getElementById('scanLog'), scanFind=document.getElementById('scanFind');
+  scanBtn.addEventListener('click',()=>{
+    const repo=document.getElementById('scanRepo').value;
+    scanBtn.disabled=true; scanBar.style.width='0';
+    const steps=[
+      ['reading <span class="k">'+repo+'</span> · main', 12],
+      ['mapping imports · exports · call sites', 34],
+      ['building code graph · 341 files', 58],
+      ['scoring 9 categories of risk', 81],
+      ['cross-referencing changed nodes', 94],
+      ['<span class="ok">scan complete · 12 findings (2 blocking)</span>', 100],
+    ];
+    scanLog.innerHTML=''; let i=0;
+    (function next(){
+      if(i>=steps.length){scanBtn.disabled=false; scanFind.textContent='12'; return;}
+      const [t,p]=steps[i++];
+      scanBar.style.width=p+'%';
+      const line=document.createElement('div'); line.innerHTML=(p<100?'<span class="dim">→</span> ':'')+t; scanLog.appendChild(line);
+      setTimeout(next, 520);
+    })();
+  });
+
+  // ── bot trainer (promptfoo) results render + mock eval ──
+  const pfBody=document.getElementById('pfBody');
+  function paint(cell,state){
+    if(state==='idle'){cell.innerHTML='<span class="pf-cell idle">· · ·</span>';}
+    else cell.innerHTML='<span class="pf-cell '+state+'">'+(state==='pass'?'PASS':'FAIL')+'</span>';
+  }
+  function tally(){
+    const cells=[...pfBody.querySelectorAll('td[data-r]')];
+    const pass=cells.filter(c=>c.dataset.r==='pass').length, tot=cells.length;
+    const pct=Math.round(pass/tot*100);
+    document.getElementById('pfRate').textContent=pct+'%';
+    document.getElementById('pfPassCount').textContent=pass+' / '+tot+' passed';
+    document.getElementById('pfMetricRate').textContent=pct+'%';
+    document.getElementById('pfRing').style.background='conic-gradient(var(--green) 0 '+pct+'%, rgba(255,255,255,0.08) '+pct+'% 100%)';
+  }
+  // initial populated state
+  pfBody.querySelectorAll('td[data-r]').forEach(c=>paint(c,c.dataset.r));
+  tally();
+  document.getElementById('evalBtn').addEventListener('click',()=>{
+    const btn=document.getElementById('evalBtn'); btn.disabled=true;
+    const cells=[...pfBody.querySelectorAll('td[data-r]')];
+    cells.forEach(c=>paint(c,'idle'));
+    cells.forEach((c,i)=>setTimeout(()=>{ paint(c,c.dataset.r); if(i===cells.length-1){tally(); btn.disabled=false;} }, 220+i*150));
+  });
+</script>
+</body>
+</html>
