@@ -506,17 +506,18 @@ function deltaHTML(pct, kind) {
   if (pct == null || pct === undefined) return '';
   var abs = Math.round(Math.abs(pct) * 100);
   var cls, arrow;
-  if (kind === 'bugs') {
-    cls = pct >= 0 ? 'bad' : 'down';
-    arrow = pct >= 0 ? '\u25B2' : '\u25BC';
-  } else if (kind === 'reviews') {
-    cls = pct >= 0 ? 'up' : 'bad';
-    arrow = pct >= 0 ? '\u25B2' : '\u25BC';
+  // 'kind' describes what 'up' means for this metric:
+  //   'reviews' -> up is good
+  //   'bugs'    -> up is bad
+  //   'time'    -> up is bad (slower)
+  var upIsGood = (kind === 'reviews');
+  var goingUp = pct > 0;
+  if (upIsGood) {
+    cls = goingUp ? 'up' : 'bad';
   } else {
-    // time: down is good (faster)
-    cls = pct <= 0 ? 'up' : 'bad';
-    arrow = pct <= 0 ? '\u25BC' : '\u25B2';
+    cls = goingUp ? 'bad' : 'down';
   }
+  arrow = goingUp ? '\u25B2' : '\u25BC';
   return '<span class="kpi-delta ' + cls + '">' + arrow + ' ' + abs + '%</span>';
 }
 
@@ -612,10 +613,16 @@ function renderTrend(data) {
 
 function renderSeverity(d) {
   var total = d.high + d.medium + d.low;
-  var hp = Math.round(d.high / total * 100);
-  var mp = Math.round(d.medium / total * 100);
-  document.getElementById('donutChart').style.background =
-    'conic-gradient(var(--red) 0 ' + hp + '%, var(--gold) ' + hp + '% ' + (hp + mp) + '%, var(--blue) ' + (hp + mp) + '% 100%)';
+  var donut = document.getElementById('donutChart');
+  if (total === 0) {
+    // Empty repo / no findings yet — render an empty neutral ring.
+    donut.style.background = 'conic-gradient(var(--border) 0 100%)';
+  } else {
+    var hp = Math.round(d.high / total * 100);
+    var mp = Math.round(d.medium / total * 100);
+    donut.style.background =
+      'conic-gradient(var(--red) 0 ' + hp + '%, var(--gold) ' + hp + '% ' + (hp + mp) + '%, var(--blue) ' + (hp + mp) + '% 100%)';
+  }
   document.getElementById('sevTotal').textContent = d.high;
   document.getElementById('sevLabel').textContent = 'BLOCKING';
   document.getElementById('sevList').innerHTML =
@@ -665,6 +672,11 @@ function renderRecent(data) {
   document.getElementById('runsBody').innerHTML = h;
 }
 
+function clearOffline() {
+  var ob = document.getElementById('offlineBar');
+  if (ob) ob.remove();
+}
+
 function showOffline() {
   if (document.getElementById('offlineBar')) return;
   var bar = document.createElement('div');
@@ -679,93 +691,129 @@ function loadingRow() {
   return '<tr><td colspan="6" style="color:var(--text-dim);text-align:center;padding:30px;font-family:var(--mono);font-size:13px">Loading\u2026</td></tr>';
 }
 
-function init() {
-  // Show loading state in empty containers
-  var runsBody = document.getElementById('runsBody');
-  if (runsBody && !runsBody.innerHTML.trim()) runsBody.innerHTML = loadingRow();
-
-  // Range toggles dispatch a re-fetch with different ?days param
-  var rangeBtns = document.querySelectorAll('.range button');
-  if (rangeBtns.length) {
-    for (var ri = 0; ri < rangeBtns.length; ri++) {
-      rangeBtns[ri].addEventListener('click', function() {
-        var days = 7;
-        if (this.textContent === '30d') days = 30;
-        else if (this.textContent === '90d') days = 90;
-        else if (this.textContent === 'All') days = 365;
-        fetch(DASH_API + '/api/dash/trend?days=' + days, {credentials:'include'})
-          .then(function(r) { return r.json(); })
-          .then(renderTrend)
-          .catch(function() {});
-      });
+// Apply the /me payload to header + strip + sidebar.
+function applyMe(me) {
+  var badge = document.getElementById('demoBadge');
+  if (me.mode !== 'owner-demo' && me.login && me.login !== 'owner-demo') {
+    // Signed in
+    if (badge) {
+      badge.textContent = me.login;
+      badge.style.color = 'var(--green)';
+      badge.style.borderColor = 'rgba(74,222,128,0.28)';
+      badge.style.background = 'rgba(74,222,128,0.08)';
     }
+    var ghBtn = document.getElementById('ghBtn');
+    if (ghBtn) {
+      ghBtn.href = DASH_API + '/auth/github/logout';
+      ghBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.4 3-.405 1.02.005 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>' + me.login;
+    }
+    var strip = document.getElementById('signinStrip');
+    if (strip) strip.remove();
+    if (me.repos && me.repos.length) {
+      document.getElementById('reposCount').textContent = me.repos.length;
+      document.getElementById('repoPickLabel').textContent = me.login;
+    }
+  } else {
+    // Owner-demo / not signed in
+    if (badge) {
+      badge.textContent = 'live \u2014 sign in for your repos';
+      badge.style.color = 'var(--gold)';
+      badge.style.borderColor = 'rgba(255,184,0,0.28)';
+      badge.style.background = 'var(--gold-glow)';
+    }
+    var stripH4 = document.getElementById('signinStripH4');
+    if (stripH4) stripH4.textContent = 'Live data from the RHOBEAR firehose.';
+    var stripP = document.getElementById('signinStripP');
+    if (stripP) stripP.textContent = 'Sign in with GitHub to scope the dashboard to your repos \u2014 free, no card.';
   }
+}
 
-  // Kick off API fetches
-  fetch(DASH_API + '/api/dash/me', {credentials:'include'})
-    .then(function(r) {
-      if (!r.ok) throw new Error('me failed');
-      return r.json();
-    })
-    .then(function(me) {
-      var badge = document.getElementById('demoBadge');
-      if (me.mode !== 'owner-demo' && me.login && me.login !== 'owner-demo') {
-        // Signed in
-        if (badge) {
-          badge.textContent = me.login;
-          badge.style.color = 'var(--green)';
-          badge.style.borderColor = 'rgba(74,222,128,0.28)';
-          badge.style.background = 'rgba(74,222,128,0.08)';
-        }
-        // Update sign-in button
-        var ghBtn = document.getElementById('ghBtn');
-        if (ghBtn) {
-          ghBtn.href = DASH_API + '/auth/github/logout';
-          ghBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.4 3-.405 1.02.005 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>' + me.login;
-        }
-        // Remove sign-in strip
-        var strip = document.getElementById('signinStrip');
-        if (strip) strip.remove();
-        // Update repo count
-        if (me.repos && me.repos.length) {
-          document.getElementById('reposCount').textContent = me.repos.length;
-          document.getElementById('repoPickLabel').textContent = me.login;
-        }
-      } else {
-        // Owner-demo / not signed in
-        if (badge) {
-          badge.textContent = 'live \u2014 sign in for your repos';
-          badge.style.color = 'var(--gold)';
-          badge.style.borderColor = 'rgba(255,184,0,0.28)';
-          badge.style.background = 'var(--gold-glow)';
-        }
-        var stripH4 = document.getElementById('signinStripH4');
-        if (stripH4) stripH4.textContent = 'Live data from the RHOBEAR firehose.';
-        var stripP = document.getElementById('signinStripP');
-        if (stripP) stripP.textContent = 'Sign in with GitHub to scope the dashboard to your repos \u2014 free, no card.';
-      }
-    })
-    .catch(function() {});
+// ── Range state (selected window). Drives both trend and KPI re-fetches. ──
+var SELECTED_DAYS = 30;
 
-  // Fetch all dash data in parallel
+function refreshRange() {
+  var ctrl = new AbortController();
   Promise.all([
-    fetch(DASH_API + '/api/dash/kpis', {credentials:'include'}).then(function(r) { return r.json(); }),
-    fetch(DASH_API + '/api/dash/trend?days=14', {credentials:'include'}).then(function(r) { return r.json(); }),
-    fetch(DASH_API + '/api/dash/severity', {credentials:'include'}).then(function(r) { return r.json(); }),
-    fetch(DASH_API + '/api/dash/categories', {credentials:'include'}).then(function(r) { return r.json(); }),
-    fetch(DASH_API + '/api/dash/recent?limit=6', {credentials:'include'}).then(function(r) { return r.json(); }),
+    fetch(DASH_API + '/api/dash/kpis?days=' + SELECTED_DAYS, {credentials:'include', signal:ctrl.signal}).then(function(r) { return r.json(); }),
+    fetch(DASH_API + '/api/dash/trend?days=' + SELECTED_DAYS, {credentials:'include', signal:ctrl.signal}).then(function(r) { return r.json(); }),
   ])
     .then(function(results) {
       renderKpis(results[0]);
       renderTrend(results[1]);
-      renderSeverity(results[2]);
-      renderCategories(results[3]);
-      renderRecent(results[4]);
     })
     .catch(function(e) {
+      if (e && e.name === 'AbortError') return;
+      console.warn('Range refresh failed:', e);
+      showOffline();
+    });
+  return ctrl;
+}
+
+// One-time listener setup (NOT re-attached on every init retry).
+function setupRangeListeners() {
+  var btns = document.querySelectorAll('.range button');
+  for (var i = 0; i < btns.length; i++) {
+    btns[i].addEventListener('click', function() {
+      var label = this.textContent;
+      if (label === '7d') SELECTED_DAYS = 7;
+      else if (label === '30d') SELECTED_DAYS = 30;
+      else if (label === '90d') SELECTED_DAYS = 90;
+      else if (label === 'All') SELECTED_DAYS = 365;
+      refreshRange();
+    });
+  }
+}
+
+// ── init: re-entrant safe. Aborts in-flight fetches before re-running. ──
+var initRunning = false;
+var initCtrl = null;
+
+function init() {
+  if (initRunning) return;
+  initRunning = true;
+
+  // Cancel any in-flight fetch from a previous init pass.
+  if (initCtrl) try { initCtrl.abort(); } catch (e) { /* noop */ }
+  initCtrl = new AbortController();
+  var signal = initCtrl.signal;
+
+  // Show loading skeleton in the runs table on first paint only.
+  var runsBody = document.getElementById('runsBody');
+  if (runsBody && !runsBody.innerHTML.trim()) runsBody.innerHTML = loadingRow();
+
+  // /me is now part of the same Promise.all so a failure here triggers
+  // the consistent offline path instead of silently swallowing the error.
+  Promise.all([
+    fetch(DASH_API + '/api/dash/me', {credentials:'include', signal:signal}).then(function(r) {
+      if (!r.ok) throw new Error('me status ' + r.status);
+      return r.json();
+    }),
+    fetch(DASH_API + '/api/dash/kpis?days=' + SELECTED_DAYS, {credentials:'include', signal:signal}).then(function(r) { return r.json(); }),
+    fetch(DASH_API + '/api/dash/trend?days=' + SELECTED_DAYS, {credentials:'include', signal:signal}).then(function(r) { return r.json(); }),
+    fetch(DASH_API + '/api/dash/severity', {credentials:'include', signal:signal}).then(function(r) { return r.json(); }),
+    fetch(DASH_API + '/api/dash/categories', {credentials:'include', signal:signal}).then(function(r) { return r.json(); }),
+    fetch(DASH_API + '/api/dash/recent?limit=6', {credentials:'include', signal:signal}).then(function(r) { return r.json(); }),
+  ])
+    .then(function(results) {
+      applyMe(results[0]);
+      renderKpis(results[1]);
+      renderTrend(results[2]);
+      renderSeverity(results[3]);
+      renderCategories(results[4]);
+      renderRecent(results[5]);
+      // Successful load — drop any stale offline banner.
+      clearOffline();
+    })
+    .catch(function(e) {
+      if (e && e.name === 'AbortError') return;
       console.error('Dashboard init error:', e);
       showOffline();
+      initRunning = false;
       setTimeout(init, 30000);
+    })
+    .then(function() {
+      // Always release the running latch on completion (success or final error).
+      initRunning = false;
     });
 }
 
@@ -778,9 +826,10 @@ function init() {
   for (var ei = 0; ei < els.length; ei++) io.observe(els[ei]);
 })();
 
-// ── Segmented / range toggles ──
+// ── Segmented / range toggles (visual on/off only; range buttons also
+//    trigger a data refresh via setupRangeListeners). Attached once. ──
 (function() {
-  document.querySelectorAll('.seg, .range').forEach(function(g) {
+  document.querySelectorAll('.seg').forEach(function(g) {
     g.addEventListener('click', function(e) {
       var b = e.target.closest('button'); if (!b) return;
       var btns = g.querySelectorAll('button');
@@ -858,8 +907,11 @@ function init() {
   });
 })();
 
-// ── Boot ──
-document.addEventListener('DOMContentLoaded', init);
+// ── Boot: attach listeners ONCE, then init. ──
+document.addEventListener('DOMContentLoaded', function() {
+  setupRangeListeners();
+  init();
+});
 </script>
 </body>
 </html>
