@@ -281,12 +281,65 @@
   .foot a:hover{color:var(--gold-hi)}
   .foot-links{display:flex;gap:24px}
 
+  /* ═══════════ VALUE MATRIX ═══════════ */
+  .vm-head{max-width:1180px;margin:70px auto 16px;text-align:center}
+  .vm-head h3{font-size:26px;font-weight:700;letter-spacing:-0.01em;margin-bottom:8px}
+  .vm-head p{font-size:14.5px;color:var(--text-2);max-width:620px;margin:0 auto}
+  .vm-head .free-emph{color:var(--gold);font-weight:600}
+  .cmp-wrap{max-width:1180px;margin:0 auto;overflow-x:auto;border:1px solid var(--border);border-radius:18px;background:linear-gradient(180deg,rgba(255,255,255,0.022) 0%,rgba(255,255,255,0.005) 100%)}
+  .cmp{width:100%;border-collapse:collapse;min-width:780px;font-size:13.5px}
+  .cmp thead th{text-align:center;padding:24px 18px 18px;border-bottom:1px solid var(--border);vertical-align:bottom}
+  .cmp thead th.feat{text-align:left;width:34%}
+  .cmp .tier-nm{font-family:var(--mono);font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-2);display:block;margin-bottom:7px}
+  .cmp .tier-pr{font-size:22px;font-weight:700;letter-spacing:-0.02em;color:var(--text)}
+  .cmp .tier-pr small{font-size:12px;font-weight:500;color:var(--text-2)}
+  .cmp th.col-pro,.cmp td.col-pro{background:linear-gradient(180deg,rgba(255,184,0,0.08) 0%,rgba(255,184,0,0.02) 100%)}
+  .cmp th.col-pro .tier-nm{color:var(--gold)}
+  .cmp th.col-free .tier-nm{color:var(--green)}
+  .cmp tbody td,.cmp tbody th{padding:13px 18px;border-bottom:1px solid var(--border);text-align:center;color:var(--text)}
+  .cmp tbody th{text-align:left;font-weight:500;color:var(--text-2)}
+  .cmp tr.grp td{padding:18px 18px 8px;font-family:var(--mono);font-size:10.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);text-align:left;border-bottom:none;background:rgba(255,184,0,0.045)}
+  .cmp .yes{color:var(--gold);font-size:15px}
+  .cmp .yes.free{color:var(--green)}
+  .cmp .no{color:var(--text-dim)}
+  .cmp .val{font-family:var(--mono);font-weight:600;color:var(--text);font-size:13px}
+  .cmp .val.gold{color:var(--gold)}
+  .cmp .val.free{color:var(--green)}
+  .cmp tbody tr:last-child td,.cmp tbody tr:last-child th{border-bottom:none}
+
+  /* ═══════════ DASHBOARD PREVIEW ═══════════ */
+  .dashprev{display:grid;grid-template-columns:1fr 1.12fr;gap:56px;align-items:center}
+  .dp-kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin:30px 0 26px}
+  .dp-kpi{background:linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.012));border:1px solid var(--border);border-radius:13px;padding:16px 18px}
+  .dp-kpi .v{font-family:var(--mono);font-size:25px;font-weight:600;letter-spacing:-0.02em;color:var(--gold);line-height:1}
+  .dp-kpi .v.alt{color:var(--text)}
+  .dp-kpi .l{font-size:11.5px;color:var(--text-2);margin-top:7px}
+  .gh-btn{display:inline-flex;align-items:center;gap:9px;font-weight:600;font-size:14px;padding:13px 20px;border-radius:11px;background:#1f2328;color:#fff;border:1px solid #30363d;transition:.18s}
+  .gh-btn:hover{background:#2a2f36;border-color:#444c56;transform:translateY(-1px);box-shadow:0 10px 26px -10px rgba(0,0,0,0.6)}
+  .gh-btn svg{width:18px;height:18px;fill:currentColor}
+  .dashprev-ctas{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+  /* the framed preview window */
+  .dpwin{border:1px solid var(--border);border-radius:16px;overflow:hidden;background:linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.006));box-shadow:0 30px 70px -28px rgba(0,0,0,0.7),0 0 0 1px rgba(255,184,0,0.04)}
+  .dpwin-bar{display:flex;align-items:center;gap:7px;padding:12px 16px;border-bottom:1px solid var(--border);background:rgba(0,0,0,0.22)}
+  .dpwin-bar .d{width:9px;height:9px;border-radius:50%}
+  .dpwin-bar .d.r{background:#ff5f57}.dpwin-bar .d.y{background:#febc2e}.dpwin-bar .d.g{background:#28c840}
+  .dpwin-bar .u{margin-left:10px;font-family:var(--mono);font-size:10.5px;color:var(--text-dim)}
+  .dpwin-bar .gh{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--gold);border:1px solid rgba(255,184,0,0.25);background:var(--gold-glow);border-radius:6px;padding:4px 9px}
+  .dpwin-body{padding:18px}
+  .dpwin-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+  .dpw-cell{border:1px solid var(--border);border-radius:10px;padding:12px;background:var(--bg-2)}
+  .dpw-cell .v{font-family:var(--mono);font-size:17px;font-weight:600;letter-spacing:-0.01em}
+  .dpw-cell .v.gold{color:var(--gold)}.dpw-cell .v.red{color:var(--red)}.dpw-cell .v.blue{color:var(--blue)}.dpw-cell .v.green{color:var(--green)}
+  .dpw-cell .l{font-size:9.5px;color:var(--text-dim);margin-top:4px;font-family:var(--mono);letter-spacing:0.04em}
+  .dpw-chart{border:1px solid var(--border);border-radius:10px;background:var(--bg-2);padding:14px 14px 10px;height:118px;display:flex;align-items:flex-end;gap:5px}
+  .dpw-chart i{flex:1;background:linear-gradient(180deg,var(--gold),rgba(255,184,0,0.2));border-radius:3px 3px 0 0;opacity:0.85}
+
   /* ═══════════ RESPONSIVE ═══════════ */
   @media (max-width:1080px){
     .price-grid{grid-template-columns:1fr;gap:18px;max-width:560px}
   }
   @media (max-width:900px){
-    .hero-grid,.bench-intro,.trans-grid,.faq-grid,.cb-grid{grid-template-columns:1fr;gap:48px}
+    .hero-grid,.bench-intro,.trans-grid,.faq-grid,.cb-grid,.dashprev{grid-template-columns:1fr;gap:48px}
     .strip-inner{grid-template-columns:repeat(2,1fr);gap:28px}
     .steps,.price-grid{grid-template-columns:1fr;gap:16px}
     .cb-step{grid-template-columns:1fr;gap:12px}
@@ -366,6 +419,7 @@
       <a href="#how" data-nav>How it works</a>
       <a href="#codebase" data-nav>Codebase</a>
       <a href="#pricing" data-nav>Pricing</a>
+      <a href="#dashboard" data-nav>Dashboard</a>
       <a href="#bench" data-nav>Benchmarks</a>
       <a href="#trans" data-nav>Receipts</a>
       <a href="#faq" data-nav>FAQ</a>
@@ -667,6 +721,105 @@
     </div>
 
     <p class="pricing-note"><strong>CodeRabbit Pro</strong> = $24 / dev / mo &nbsp;·&nbsp; <strong>CodeAnt</strong> = $24 / user / mo &nbsp;·&nbsp; They charge per seat. We charge per review. Ship faster, pay for what you use.</p>
+
+    <div class="vm-head reveal">
+      <h3>Everything you actually get</h3>
+      <p>Most of the product — the <span class="free-emph">full reviewer, all 9 risk categories, evidence, verdicts, unlimited team, and total privacy</span> — is free. Paid tiers add volume, private repos, and whole-codebase intelligence.</p>
+    </div>
+    <div class="cmp-wrap reveal">
+      <table class="cmp">
+        <thead>
+          <tr>
+            <th class="feat"></th>
+            <th class="col-free"><span class="tier-nm">Free</span><span class="tier-pr">$0</span></th>
+            <th><span class="tier-nm">Pro</span><span class="tier-pr">$19<small>/mo</small></span></th>
+            <th class="col-pro"><span class="tier-nm">Pro + Codebase</span><span class="tier-pr">$24<small>/mo</small></span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="grp"><td colspan="4">Every review — yes, even on Free</td></tr>
+          <tr><th>Reviews included</th><td class="val free">1 / day</td><td class="val">100 / mo</td><td class="val col-pro gold">100 / mo</td></tr>
+          <tr><th>Same full reviewer engine</th><td class="yes free">✓</td><td class="yes">✓</td><td class="yes col-pro">✓</td></tr>
+          <tr><th>Risk categories scored</th><td class="val free">9</td><td class="val">9</td><td class="val col-pro">9</td></tr>
+          <tr><th>File:line evidence + fix</th><td class="yes free">✓</td><td class="yes">✓</td><td class="yes col-pro">✓</td></tr>
+          <tr><th>Severity on every finding</th><td class="yes free">✓</td><td class="yes">✓</td><td class="yes col-pro">✓</td></tr>
+          <tr><th>Binary verdict on the PR</th><td class="yes free">✓</td><td class="yes">✓</td><td class="yes col-pro">✓</td></tr>
+          <tr><th>Review model</th><td class="val free">Arcturus</td><td class="val">Arcturus</td><td class="val col-pro gold">Ursa</td></tr>
+
+          <tr class="grp"><td colspan="4">Signal you can trust</td></tr>
+          <tr><th>Adversarial verify · every finding re-checked, false positives dropped</th><td class="no">—</td><td class="yes">✓</td><td class="yes col-pro">✓</td></tr>
+          <tr><th>Re-verifies the finding when you push a fix</th><td class="no">—</td><td class="yes">✓</td><td class="yes col-pro">✓</td></tr>
+
+          <tr class="grp"><td colspan="4">Where it runs</td></tr>
+          <tr><th>Public repos</th><td class="yes free">✓</td><td class="yes">✓</td><td class="yes col-pro">✓</td></tr>
+          <tr><th>Private repos</th><td class="no">—</td><td class="yes">✓</td><td class="yes col-pro">✓</td></tr>
+          <tr><th><code style="font-family:var(--mono);font-size:12px">@rhobear review</code> on demand</th><td class="yes free">✓</td><td class="yes">✓</td><td class="yes col-pro">✓</td></tr>
+          <tr><th>Auto-review every new PR</th><td class="no">—</td><td class="yes">✓</td><td class="yes col-pro">✓</td></tr>
+          <tr><th><code style="font-family:var(--mono);font-size:12px">@rhobear escalate</code> · deeper Ursa pass</th><td class="no">—</td><td class="yes">✓</td><td class="yes col-pro">✓</td></tr>
+          <tr><th>Priority queue on traffic spikes</th><td class="no">—</td><td class="yes">✓</td><td class="yes col-pro">✓</td></tr>
+
+          <tr class="grp"><td colspan="4">Whole-codebase intelligence</td></tr>
+          <tr><th>Full-repo read on install</th><td class="no">—</td><td class="no">—</td><td class="yes col-pro">✓</td></tr>
+          <tr><th>Live incremental updates as you ship</th><td class="no">—</td><td class="no">—</td><td class="yes col-pro">✓</td></tr>
+          <tr><th>Catches bugs in the caller you broke</th><td class="no">—</td><td class="no">—</td><td class="yes col-pro">✓</td></tr>
+          <tr><th>Flags broken codebase patterns</th><td class="no">—</td><td class="no">—</td><td class="yes col-pro">✓</td></tr>
+
+          <tr class="grp"><td colspan="4">Team &amp; delivery</td></tr>
+          <tr><th>Unlimited team members · no per-seat fee</th><td class="yes free">✓</td><td class="yes">✓</td><td class="yes col-pro">✓</td></tr>
+          <tr><th>Email + Slack weekly digest</th><td class="no">—</td><td class="yes">✓</td><td class="yes col-pro">✓</td></tr>
+          <tr><th>Top-up packs · 50 reviews / $9</th><td class="no">—</td><td class="yes">✓</td><td class="yes col-pro">✓</td></tr>
+          <tr><th>Scanner dashboard · sign in with GitHub</th><td class="yes free">✓</td><td class="yes">✓</td><td class="yes col-pro">✓</td></tr>
+
+          <tr class="grp"><td colspan="4">Your code stays yours</td></tr>
+          <tr><th>Inference-only · no diff retained</th><td class="yes free">✓</td><td class="yes">✓</td><td class="yes col-pro">✓</td></tr>
+          <tr><th>Never trains on your code</th><td class="yes free">✓</td><td class="yes">✓</td><td class="yes col-pro">✓</td></tr>
+          <tr><th>No data sold · no per-seat tracking</th><td class="yes free">✓</td><td class="yes">✓</td><td class="yes col-pro">✓</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ DASHBOARD PREVIEW ═══════════ -->
+<section id="dashboard">
+  <div class="wrap">
+    <div class="dashprev">
+      <div class="reveal">
+        <span class="eyebrow">Your scanner, visualized</span>
+        <h2>Every run, every bug, <span class="accent">on one screen.</span></h2>
+        <p class="section-lede" style="margin-bottom:0">The reviewer posts to your PRs — but the dashboard is where you see it add up. How many reviews you've run, how many bugs we caught, how long each scan took, and how fast we got you a verdict. Sign in with GitHub and it's reading your repos in seconds.</p>
+        <div class="dp-kpis">
+          <div class="dp-kpi"><div class="v">1,284</div><div class="l">Reviews run</div></div>
+          <div class="dp-kpi"><div class="v">3,947</div><div class="l">Bugs caught</div></div>
+          <div class="dp-kpi"><div class="v alt">1m 38s</div><div class="l">Median run time</div></div>
+          <div class="dp-kpi"><div class="v alt">1m 12s</div><div class="l">Avg time to verdict</div></div>
+        </div>
+        <div class="dashprev-ctas">
+          <a href="https://github.com/apps/rhobear-reviews/installations/new" class="gh-btn">
+            <svg viewBox="0 0 24 24"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.4 3-.405 1.02.005 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+            Sign in with GitHub
+          </a>
+          <a href="dashboard.html" class="btn-secondary">Open the live demo →</a>
+        </div>
+      </div>
+
+      <div class="reveal" style="transition-delay:0.16s">
+        <a href="dashboard.html" class="dpwin" style="display:block">
+          <div class="dpwin-bar"><span class="d r"></span><span class="d y"></span><span class="d g"></span><span class="u">reviews.rhobear.ai / dashboard</span><span class="gh">● signed in</span></div>
+          <div class="dpwin-body">
+            <div class="dpwin-row">
+              <div class="dpw-cell"><div class="v gold">1,284</div><div class="l">RUNS</div></div>
+              <div class="dpw-cell"><div class="v red">3,947</div><div class="l">BUGS</div></div>
+              <div class="dpw-cell"><div class="v blue">1m38s</div><div class="l">RUN TIME</div></div>
+              <div class="dpw-cell"><div class="v green">1m12s</div><div class="l">TO VERDICT</div></div>
+            </div>
+            <div class="dpw-chart">
+              <i style="height:42%"></i><i style="height:55%"></i><i style="height:38%"></i><i style="height:62%"></i><i style="height:50%"></i><i style="height:72%"></i><i style="height:64%"></i><i style="height:58%"></i><i style="height:84%"></i><i style="height:71%"></i><i style="height:92%"></i><i style="height:78%"></i><i style="height:97%"></i><i style="height:100%"></i>
+            </div>
+          </div>
+        </a>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -894,7 +1047,7 @@
   document.querySelectorAll('.reveal, .reveal-stagger').forEach(el => io.observe(el));
 
   // ═══════════ ACTIVE NAV STATE ═══════════
-  const sections = ['how','codebase','pricing','bench','trans','faq'].map(id => document.getElementById(id));
+  const sections = ['how','codebase','pricing','dashboard','bench','trans','faq'].map(id => document.getElementById(id));
   const navLinks = document.querySelectorAll('a[data-nav]');
   const navIO = new IntersectionObserver((entries) => {
     entries.forEach(e => {
