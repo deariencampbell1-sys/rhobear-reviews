@@ -389,7 +389,7 @@
       <div class="scan-form">
         <div class="field">
           <label>Repository</label>
-          <select class="sel" id="scanRepo"><option>acme-co/payments-api</option><option>acme-co/web-app</option><option>acme-co/billing-svc</option><option>acme-co/infra</option></select>
+          <select class="sel" id="scanRepo"><option value="">— repos load with /me —</option></select>
         </div>
         <div class="field">
           <label>Branch</label>
@@ -422,24 +422,18 @@
         <div class="pf-col">
           <div class="pf-block">
             <h5>Providers · your bots</h5>
-            <div class="pchips">
-              <span class="pchip">support-bot · <span class="m">arcturus</span></span>
-              <span class="pchip">support-bot · <span class="m">ursa</span></span>
-              <span class="pchip add">+ add bot</span>
+            <div class="pchips" id="botChips">
+              <span class="pchip add" style="color:var(--text-dim)">no bots configured · local preview</span>
             </div>
           </div>
           <div class="pf-block">
             <h5>Prompt</h5>
-            <div class="pf-prompt">You are the Acme support agent. Answer using <span class="var">{{policy}}</span>. Be brief, correct, and on-brand. Question: <span class="var">{{question}}</span></div>
+            <div class="pf-prompt" id="pfPromptPreview" style="color:var(--text-dim)">// prompt template — edit your <b style="color:var(--text-2)">promptfooconfig.yaml</b> to sync</div>
           </div>
           <div class="pf-block">
             <h5>Tests · assertions</h5>
             <div class="pf-tests" id="pfTests">
-              <div class="pf-test"><span class="nm">Refund window stated</span><span class="apill">contains "30 days"</span></div>
-              <div class="pf-test"><span class="nm">Stays polite &amp; on-brand</span><span class="apill rub">llm-rubric</span></div>
-              <div class="pf-test"><span class="nm">No hallucinated price</span><span class="apill rub">llm-rubric</span></div>
-              <div class="pf-test"><span class="nm">Handles PayPal dispute</span><span class="apill">contains "dispute"</span></div>
-              <div class="pf-test"><span class="nm">Answers under 2s</span><span class="apill lat">latency &lt; 2000ms</span></div>
+              <div class="pf-test" style="color:var(--text-dim)"><span class="nm">no tests defined · local preview</span></div>
             </div>
           </div>
           <div class="pf-runrow">
@@ -454,20 +448,16 @@
         <div class="pf-col">
           <h5>Results</h5>
           <div class="pf-res-head">
-            <div class="ring" id="pfRing"><b id="pfRate">80%</b></div>
-            <div class="t"><b id="pfPassCount">8 / 10 passed</b><span>2 providers × 5 tests · last run just now</span></div>
+            <div class="ring" id="pfRing"><b id="pfRate">—</b></div>
+            <div class="t"><b id="pfPassCount">no eval data</b><span>local preview · not connected to promptfoo</span></div>
           </div>
           <table class="pfm">
-            <thead><tr><th class="tcase">Test case</th><th>Arcturus</th><th>Ursa</th></tr></thead>
+            <thead><tr><th class="tcase">Test case</th><th id="pfProv1">—</th><th id="pfProv2">—</th></tr></thead>
             <tbody id="pfBody">
-              <tr><td class="tcase">Refund window stated</td><td data-r="pass"></td><td data-r="pass"></td></tr>
-              <tr><td class="tcase">Stays polite &amp; on-brand</td><td data-r="pass"></td><td data-r="pass"></td></tr>
-              <tr><td class="tcase">No hallucinated price</td><td data-r="fail"></td><td data-r="pass"></td></tr>
-              <tr><td class="tcase">Handles PayPal dispute</td><td data-r="pass"></td><td data-r="pass"></td></tr>
-              <tr><td class="tcase">Answers under 2s</td><td data-r="pass"></td><td data-r="fail"></td></tr>
+              <tr><td class="tcase" colspan="3" style="color:var(--text-dim);text-align:center;padding:30px">no eval runs yet · local preview</td></tr>
             </tbody>
           </table>
-          <div class="pf-metrics"><span>Pass rate <b id="pfMetricRate">80%</b></span><span>Avg latency <b>1.4s</b></span><span>Avg score <b>0.91</b></span><span>Model <b>Arcturus · Ursa</b></span></div>
+          <div class="pf-metrics"><span>Pass rate <b id="pfMetricRate">—</b></span><span>Avg latency <b>—</b></span><span>Avg score <b>—</b></span><span>Model <b id="pfModelNames">—</b></span></div>
         </div>
       </div>
     </div>
@@ -694,7 +684,21 @@ function loadingRow() {
 // Apply the /me payload to header + strip + sidebar.
 function applyMe(me) {
   var badge = document.getElementById('demoBadge');
-  if (me.mode !== 'owner-demo' && me.login && me.login !== 'owner-demo') {
+  var repos = (me && me.repos && me.repos.length) ? me.repos : [];
+
+  // Always populate repo dropdowns from /me
+  var scanSel = document.getElementById('scanRepo');
+  if (scanSel && repos.length) {
+    scanSel.innerHTML = '';
+    for (var ri = 0; ri < repos.length; ri++) {
+      var opt = document.createElement('option');
+      opt.value = repos[ri];
+      opt.textContent = repos[ri];
+      scanSel.appendChild(opt);
+    }
+  }
+
+  if (me && me.mode !== 'owner-demo' && me.login && me.login !== 'owner-demo') {
     // Signed in
     if (badge) {
       badge.textContent = me.login;
@@ -709,12 +713,12 @@ function applyMe(me) {
     }
     var strip = document.getElementById('signinStrip');
     if (strip) strip.remove();
-    if (me.repos && me.repos.length) {
-      document.getElementById('reposCount').textContent = me.repos.length;
+    if (repos.length) {
+      document.getElementById('reposCount').textContent = repos.length;
       document.getElementById('repoPickLabel').textContent = me.login;
     }
   } else {
-    // Owner-demo / not signed in
+    // Owner-demo / not signed in — still show real aggregate data, never "Demo data"
     if (badge) {
       badge.textContent = 'live \u2014 sign in for your repos';
       badge.style.color = 'var(--gold)';
@@ -725,6 +729,10 @@ function applyMe(me) {
     if (stripH4) stripH4.textContent = 'Live data from the RHOBEAR firehose.';
     var stripP = document.getElementById('signinStripP');
     if (stripP) stripP.textContent = 'Sign in with GitHub to scope the dashboard to your repos \u2014 free, no card.';
+    if (repos.length) {
+      document.getElementById('reposCount').textContent = repos.length;
+      document.getElementById('repoPickLabel').textContent = 'reviews.rhobear.ai';
+    }
   }
 }
 
@@ -845,6 +853,7 @@ function init() {
   if (!scanBtn) return;
   scanBtn.addEventListener('click', function() {
     var repo = document.getElementById('scanRepo').value;
+    if (!repo) { alert('No repo selected. Sign in to populate your repos, or pick one from the dropdown.'); return; }
     var bar = document.getElementById('scanBar');
     var log = document.getElementById('scanLog');
     scanBtn.disabled = true;
@@ -855,7 +864,7 @@ function init() {
       ['building code graph', 58],
       ['scoring risk categories', 81],
       ['cross-referencing changed nodes', 94],
-      ['<span class="ok">scan complete \u00B7 local preview only</span>', 100],
+      ['<span class="ok">scan complete \u00B7 local preview only \u2014 no live scanner</span>', 100],
     ];
     log.innerHTML = '// \u26A1 local preview \u2014 not connected to a live scanner\n';
     var i = 0;
@@ -876,12 +885,15 @@ function init() {
 (function() {
   var pfBody = document.getElementById('pfBody');
   if (!pfBody) return;
+  // When no eval data exists, the pfBody has a placeholder row — skip animation.
+  function hasEvalData() { return pfBody.querySelectorAll('td[data-r]').length > 0; }
   function paint(cell, state) {
     if (state === 'idle') { cell.innerHTML = '<span class="pf-cell idle">\u00B7 \u00B7 \u00B7</span>'; }
     else cell.innerHTML = '<span class="pf-cell ' + state + '">' + (state === 'pass' ? 'PASS' : 'FAIL') + '</span>';
   }
   function tally() {
     var cells = pfBody.querySelectorAll('td[data-r]');
+    if (!cells.length) return;
     var pass = 0;
     for (var i = 0; i < cells.length; i++) { if (cells[i].dataset.r === 'pass') pass++; }
     var tot = cells.length || 1;
@@ -891,11 +903,27 @@ function init() {
     document.getElementById('pfMetricRate').textContent = pct + '%';
     document.getElementById('pfRing').style.background = 'conic-gradient(var(--green) 0 ' + pct + '%, rgba(255,255,255,0.08) ' + pct + '% 100%)';
   }
-  // Initial paint
-  pfBody.querySelectorAll('td[data-r]').forEach(function(c) { paint(c, c.dataset.r); });
-  tally();
+  // Only paint + tally when real eval data rows exist.
+  if (hasEvalData()) {
+    pfBody.querySelectorAll('td[data-r]').forEach(function(c) { paint(c, c.dataset.r); });
+    tally();
+  }
   document.getElementById('evalBtn').addEventListener('click', function() {
-    var btn = document.getElementById('evalBtn'); btn.disabled = true;
+    var btn = document.getElementById('evalBtn');
+    if (!hasEvalData()) {
+      // No eval data — show a brief idle pulse then return to preview state.
+      btn.disabled = true;
+      var ring = document.getElementById('pfRing');
+      ring.style.background = 'conic-gradient(var(--gold) 0 100%)';
+      document.getElementById('pfRate').textContent = '\u00B7 \u00B7 \u00B7';
+      setTimeout(function() {
+        ring.style.background = 'conic-gradient(rgba(255,255,255,0.08) 0 100%)';
+        document.getElementById('pfRate').textContent = '\u2014';
+        btn.disabled = false;
+      }, 2000);
+      return;
+    }
+    btn.disabled = true;
     var cells = [].slice.call(pfBody.querySelectorAll('td[data-r]'));
     cells.forEach(function(c) { paint(c, 'idle'); });
     cells.forEach(function(c, i) {
