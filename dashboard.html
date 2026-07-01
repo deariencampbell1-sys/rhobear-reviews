@@ -698,7 +698,7 @@ function applyMe(me) {
     }
   }
 
-  if (me.mode !== 'owner-demo' && me.login && me.login !== 'owner-demo') {
+  if (me && me.mode !== 'owner-demo' && me.login && me.login !== 'owner-demo') {
     // Signed in
     if (badge) {
       badge.textContent = me.login;
