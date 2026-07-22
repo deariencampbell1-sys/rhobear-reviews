@@ -458,7 +458,7 @@
           <span class="hc-title">rhobear · review.log · live</span>
         </div>
         <div class="hc-body">
-          <div class="hc-line cmd">gh pr view 142 → @rhobear review</div>
+          <div class="hc-line cmd">gh pr view 142 → @rhobear-reviews review</div>
           <div class="hc-line arrow">→ fetching diff · 87 files · +1,243 / -318</div>
           <div class="hc-line arrow">→ scoring 9 categories of risk</div>
           <div class="hc-line">&nbsp;</div>
@@ -508,7 +508,7 @@
   <div class="wrap">
     <div class="reveal">
       <span class="eyebrow">How it works</span>
-      <h2>Install. Open a PR. Tag <span class="accent">@rhobear</span>. Done.</h2>
+      <h2>Install. Open a PR. Tag <span class="accent">@rhobear-reviews</span>. Done.</h2>
       <p class="section-lede">No new dashboard to learn. No webhook to configure. RHOBEAR Reviews lives where your code already does — in the PR thread, posting structured findings with file:line evidence and a binary verdict your team can act on.</p>
     </div>
 
@@ -527,7 +527,7 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="18" r="3"/><path d="M6 9v6M18 15V9a3 3 0 00-3-3h-3"/><path d="M11 4l-2 2 2 2"/></svg>
         </div>
         <h3>Open a PR — or comment</h3>
-        <p>New PRs trigger us automatically. Existing PRs: drop <code>@rhobear review</code> in any comment.</p>
+        <p>New PRs trigger us automatically. Existing PRs: drop <code>@rhobear-reviews review</code> in any comment.</p>
       </div>
       <div class="step">
         <span class="step-n">03</span>
@@ -692,7 +692,7 @@
           <li><svg class="check" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4,11 9,16 17,5"/></svg>100 reviews per month, public or private</li>
           <li><svg class="check" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4,11 9,16 17,5"/></svg>Unlimited team members — no per-dev billing</li>
           <li><svg class="check" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4,11 9,16 17,5"/></svg>Auto-review on every new PR (configurable)</li>
-          <li><svg class="check" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4,11 9,16 17,5"/></svg><code>@rhobear escalate</code> for higher-budget scrutiny</li>
+          <li><svg class="check" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4,11 9,16 17,5"/></svg><code>@rhobear-reviews escalate</code> for higher-budget scrutiny</li>
           <li><svg class="check" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4,11 9,16 17,5"/></svg>Priority queue when traffic spikes</li>
           <li><svg class="check" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4,11 9,16 17,5"/></svg>Email + Slack digest of weekly findings</li>
         </ul>
@@ -753,9 +753,9 @@
           <tr class="grp"><td colspan="4">Where it runs</td></tr>
           <tr><th>Public repos</th><td class="yes free">✓</td><td class="yes">✓</td><td class="yes col-pro">✓</td></tr>
           <tr><th>Private repos</th><td class="no">—</td><td class="yes">✓</td><td class="yes col-pro">✓</td></tr>
-          <tr><th><code style="font-family:var(--mono);font-size:12px">@rhobear review</code> on demand</th><td class="yes free">✓</td><td class="yes">✓</td><td class="yes col-pro">✓</td></tr>
+          <tr><th><code style="font-family:var(--mono);font-size:12px">@rhobear-reviews review</code> on demand</th><td class="yes free">✓</td><td class="yes">✓</td><td class="yes col-pro">✓</td></tr>
           <tr><th>Auto-review every new PR</th><td class="no">—</td><td class="yes">✓</td><td class="yes col-pro">✓</td></tr>
-          <tr><th><code style="font-family:var(--mono);font-size:12px">@rhobear escalate</code> · deeper Ursa pass</th><td class="no">—</td><td class="yes">✓</td><td class="yes col-pro">✓</td></tr>
+          <tr><th><code style="font-family:var(--mono);font-size:12px">@rhobear-reviews escalate</code> · deeper Ursa pass</th><td class="no">—</td><td class="yes">✓</td><td class="yes col-pro">✓</td></tr>
           <tr><th>Priority queue on traffic spikes</th><td class="no">—</td><td class="yes">✓</td><td class="yes col-pro">✓</td></tr>
 
           <tr class="grp"><td colspan="4">Whole-codebase intelligence</td></tr>
@@ -799,12 +799,12 @@
             <svg viewBox="0 0 24 24"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.4 3-.405 1.02.005 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
             Sign in with GitHub
           </a>
-          <a href="dashboard.html" class="btn-secondary">Open the live demo →</a>
+          <a href="/dashboard/" class="btn-secondary">Open the live demo →</a>
         </div>
       </div>
 
       <div class="reveal" style="transition-delay:0.16s">
-        <a href="dashboard.html" class="dpwin" style="display:block">
+        <a href="/dashboard/" class="dpwin" style="display:block">
           <div class="dpwin-bar"><span class="d r"></span><span class="d y"></span><span class="d g"></span><span class="u">reviews.rhobear.ai / dashboard</span><span class="gh">● signed in</span></div>
           <div class="dpwin-body">
             <div class="dpwin-row">
@@ -945,7 +945,7 @@
     <div class="faq-grid reveal-stagger">
       <div class="faq">
         <h4>What's a "review"?</h4>
-        <p>One pass over one pull request. Mention <code>@rhobear</code> ten times on the same PR — still one review. Open a new PR — that's review two.</p>
+        <p>One pass over one pull request. Mention <code>@rhobear-reviews</code> ten times on the same PR — still one review. Open a new PR — that's review two.</p>
       </div>
       <div class="faq">
         <h4>Do I need a credit card for the free tier?</h4>

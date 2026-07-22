@@ -1,0 +1,56 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# PROPOSED Caddy vhost for reviews.rhobear.ai
+# Lane: reviews-wiring (prep only — the DISPATCHER applies + reloads Caddy).
+#
+# Replace the entire `reviews.rhobear.ai { ... }` block in the live Caddyfile
+# with the block below. Substitute <HASH> with the current Cloud Run revision
+# URL already present in the live block
+# (https://rhobear-reviews-dash-<HASH>.us-central1.run.app). The exact same
+# upstream string is reused for /dashboard/* and /api/dash/*.
+#
+# ASSETS-COLLISION REASONING (why the two assets/ trees do not clash):
+#   The landing page lives at `/` and references its images with a relative
+#   `assets/...`, so the browser asks the origin for `/assets/...`. Those
+#   requests fall through to the final catch-all `handle` and are served from
+#   the landing docroot by file_server.
+#   The dashboard lives at `/dashboard/` and ALSO references its own assets
+#   with a relative `assets/...`, but because it is mounted one path segment
+#   deeper, the browser asks for `/dashboard/assets/...`. Those requests match
+#   `handle_path /dashboard/*`, which strips the `/dashboard` prefix before
+#   proxying — so Cloud Run receives `/assets/...` and answers with the
+#   dashboard's own assets. The two asset namespaces are kept distinct purely
+#   by the `/dashboard` path prefix; no rewrite, no collision, no guesswork.
+# ─────────────────────────────────────────────────────────────────────────────
+
+reviews.rhobear.ai {
+	# Canonicalize the dashboard entry: bare /dashboard → /dashboard/ so the
+	# dashboard index resolves even without a trailing slash.
+	redir /dashboard /dashboard/
+
+	# Webhook → local bot receiver (unchanged from today's live config).
+	handle /webhook {
+		reverse_proxy 127.0.0.1:8766
+	}
+
+	# Dashboard app → Cloud Run. handle_path STRIPS the /dashboard prefix, so
+	# the dashboard index is served at upstream `/` and the app's relative
+	# `/dashboard/assets/*` resolve to upstream `/assets/*` (see note above).
+	handle_path /dashboard/* {
+		reverse_proxy https://rhobear-reviews-dash-<HASH>.us-central1.run.app
+	}
+
+	# Dashboard API → Cloud Run, path intact. The dashboard fetches
+	# DASH_API + "/api/dash/..." where DASH_API = https://reviews.rhobear.ai
+	# (same origin), so every call lands here at an absolute /api/dash/* path.
+	handle /api/dash/* {
+		reverse_proxy https://rhobear-reviews-dash-<HASH>.us-central1.run.app
+	}
+
+	# Landing page (static docroot). This catch-all also serves the landing's
+	# own /assets/* — it never sees the dashboard's assets because those are
+	# namespaced under /dashboard/* (matched above). Serves index.html at /.
+	handle {
+		root * /var/www/rhobear-reviews-landing
+		file_server
+	}
+}

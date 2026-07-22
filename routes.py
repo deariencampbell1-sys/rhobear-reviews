@@ -2,14 +2,19 @@
 
 This file exists to satisfy the RHOBEAR Verifier's ``ui-route-diff`` static
 check in this multi-repo architecture. The dashboard.html in THIS repo
-(rhobear-reviews, the GitHub Pages landing site) renders responses from a
-backend that lives in a SEPARATE repo:
+(rhobear-reviews, the landing repo — served by Caddy from a static
+docroot) renders responses from a backend that lives in a SEPARATE repo:
 
     deariencampbell1-sys/rhobear-reviews-app     (lane dash-api, commit a674644)
 
-That backend is a FastAPI app on 127.0.0.1:7790, fronted by Caddy at
-reviews.rhobear.ai. The six endpoints below are the full public contract
-the dashboard relies on. They are declared here using the FastAPI
+That backend is a FastAPI app deployed on Google Cloud Run (service
+``rhobear-reviews-dash``, ``*.us-central1.run.app``). Caddy fronts it at
+reviews.rhobear.ai: ``/api/dash/*`` and ``/dashboard/*`` reverse_proxy to
+the Cloud Run service, ``/webhook`` goes to the local bot receiver on
+127.0.0.1:8766, and ``/`` serves this landing page from a static docroot.
+(127.0.0.1:7790 survives only as the localhost dev target wired into
+dashboard.html.) The six endpoints below are the full public contract the
+dashboard relies on. They are declared here using the FastAPI
 ``@app.get(...)`` decorator pattern so the verifier can statically confirm
 that every ``fetch('/api/dash/...')`` in dashboard.html maps to a real
 backend route.
